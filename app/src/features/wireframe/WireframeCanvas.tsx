@@ -1,0 +1,78 @@
+import { useState, useEffect } from 'react'
+import { motion, useReducedMotion } from 'motion/react'
+import type { PageLayout } from '@/types/audit'
+import { useSelectedBookmark, useAuditReport } from '@/store/hooks'
+import { getCanvasDimensions, normalisePosition } from './wireframeLayout'
+import { VisualCard } from './VisualCard'
+
+interface WireframeCanvasProps {
+  pageLayout: PageLayout
+}
+
+export function WireframeCanvas({ pageLayout }: WireframeCanvasProps) {
+  const shouldReduceMotion = useReducedMotion()
+  const [isAnimating, setIsAnimating] = useState(false)
+
+  const selectedBookmarkId = useSelectedBookmark()
+  const auditReport = useAuditReport()
+
+  useEffect(() => {
+    setIsAnimating(false)
+  }, [selectedBookmarkId])
+
+  const selectedBookmark =
+    auditReport?.bookmarks.find((b) => b.id === selectedBookmarkId) ?? null
+  const isNoOp = selectedBookmark?.suppressDisplay === true
+  const isBookmarkActive = Boolean(selectedBookmark && !isNoOp)
+
+  const hiddenSet = new Set(isBookmarkActive ? selectedBookmark!.hiddenVisualIds : [])
+  const targetSet = new Set(isBookmarkActive ? selectedBookmark!.affectedVisualIds : [])
+
+  const canvasState = isAnimating
+    ? 'animating'
+    : isBookmarkActive
+    ? 'bookmark-selected'
+    : 'empty'
+
+  const { width: canvasWidth, height: canvasHeight } = getCanvasDimensions(pageLayout)
+
+  return (
+    <div style={{ width: '100%', aspectRatio: `${canvasWidth} / ${canvasHeight}`, position: 'relative' }}>
+      <motion.svg
+        viewBox="0 0 100 100"
+        preserveAspectRatio="xMidYMid meet"
+        width="100%"
+        height="100%"
+        data-canvas-state={canvasState}
+        style={{
+          display: 'block',
+          position: 'absolute',
+          inset: 0,
+          pointerEvents: isAnimating ? 'none' : 'auto',
+        }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.25, ease: 'easeOut' }}
+      >
+        {pageLayout.visuals.map((visual, index) => {
+          const isHidden = hiddenSet.has(visual.id)
+          const isAffected = !isHidden && targetSet.has(visual.id)
+          const opacity = isHidden ? 0.12 : 1
+
+          return (
+            <VisualCard
+              key={visual.id}
+              visual={visual}
+              normPos={normalisePosition(visual.position, canvasWidth, canvasHeight)}
+              index={index}
+              opacity={opacity}
+              isAffected={isAffected}
+              onAnimationStart={index === 0 ? () => setIsAnimating(true) : undefined}
+              onAnimationComplete={index === 0 ? () => setIsAnimating(false) : undefined}
+            />
+          )
+        })}
+      </motion.svg>
+    </div>
+  )
+}

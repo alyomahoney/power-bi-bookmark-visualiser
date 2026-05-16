@@ -1,0 +1,25 @@
+{
+  "version": "1.0",
+  "bookmarks": [
+    {
+      "id": "bk-001",
+      "name": "Show Chart",
+      "displayName": "Show Chart",
+      "type": "display",
+      "state": {
+        "visuals": { "v-001": { "hidden": false }, "v-002": { "hidden": true } },
+        "filters": []
+      }
+    },
+    {
+      "id": "bk-002",
+      "name": "Hide Chart",
+      "displayName": "Hide Chart",
+      "type": "display",
+      "state": {
+        "visuals": { "v-001": { "hidden": true }, "v-002": { "hidden": false } },
+        "filters": []
+      }
+    }
+  ]
+}

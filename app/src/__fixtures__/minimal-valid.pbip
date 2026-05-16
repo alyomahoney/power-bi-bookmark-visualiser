@@ -1,0 +1,15 @@
+{
+  "version": "1.0",
+  "bookmarks": [
+    {
+      "id": "bk-001",
+      "name": "Default View",
+      "displayName": "Default View",
+      "type": "display",
+      "state": {
+        "visuals": {},
+        "filters": []
+      }
+    }
+  ]
+}

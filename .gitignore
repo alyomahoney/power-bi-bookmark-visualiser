@@ -1,0 +1,16 @@
+# macOS
+.DS_Store
+
+# Planning & AI tooling
+_bmad/
+_bmad-output/
+.claude/
+
+# Sample data
+sales_report_for_bookmarks.Report/
+
+# App build output (also covered in app/.gitignore)
+app/node_modules/
+app/dist/
+app/dist-ssr/
+app/coverage/

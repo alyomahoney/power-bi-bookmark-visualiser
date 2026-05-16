@@ -1,0 +1,281 @@
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router'
+import { Search } from 'lucide-react'
+import { useAuditReport, useSetAuditReport, useClearAudit, useSelectedBookmark, useSelectBookmark, useSearchQuery, useSetSearchQuery, useClearFilters, useSelectedTypes, useToggleType, useSelectedVisualIds, useToggleVisual, useExitDemoMode } from '@/store/hooks'
+import { sessionCache } from '@/shared/utils/sessionCache'
+import { ThemeToggle } from '@/shared/components/ThemeToggle'
+import { BookmarkListItem } from './BookmarkListItem'
+import { BookmarkDetail } from './BookmarkDetail'
+import { BookmarkSearchInput } from './BookmarkSearchInput'
+import { BookmarkTypeFilter } from './BookmarkTypeFilter'
+import { BookmarkVisualFilter } from './BookmarkVisualFilter'
+import { WireframeCanvas } from '@/features/wireframe/WireframeCanvas'
+
+export default function AuditPage() {
+  const auditReport = useAuditReport()
+  const setAuditReport = useSetAuditReport()
+  const clearAudit = useClearAudit()
+  const navigate = useNavigate()
+  const [rovingIndex, setRovingIndex] = useState(0)
+  const rovingIndexRef = useRef(0)
+  const itemRefs = useRef<(HTMLDivElement | null)[]>([])
+  const selectedBookmarkId = useSelectedBookmark()
+  const selectBookmark = useSelectBookmark()
+  const searchQuery = useSearchQuery()
+  const setSearchQuery = useSetSearchQuery()
+  const clearFilters = useClearFilters()
+  const selectedTypes = useSelectedTypes()
+  const toggleType = useToggleType()
+  const selectedVisualIds = useSelectedVisualIds()
+  const toggleVisual = useToggleVisual()
+  const exitDemoMode = useExitDemoMode()
+
+  useEffect(() => {
+    const meta = document.createElement('meta')
+    meta.name = 'robots'
+    meta.content = 'noindex'
+    document.head.appendChild(meta)
+    return () => {
+      if (document.head.contains(meta)) {
+        document.head.removeChild(meta)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!auditReport) {
+      const cached = sessionCache.read()
+      if (cached) {
+        setAuditReport(cached)
+      } else {
+        navigate('/', { replace: true })
+      }
+    }
+  }, []) // intentionally empty — run once on mount only
+
+  useEffect(() => {
+    setRovingIndex(0)
+    rovingIndexRef.current = 0
+  }, [auditReport])
+
+  useEffect(() => {
+    setRovingIndex(0)
+    rovingIndexRef.current = 0
+  }, [searchQuery])
+
+  useEffect(() => {
+    setRovingIndex(0)
+    rovingIndexRef.current = 0
+  }, [selectedTypes])
+
+  useEffect(() => {
+    setRovingIndex(0)
+    rovingIndexRef.current = 0
+  }, [selectedVisualIds])
+
+  const toggleKindMap = useMemo((): Map<string, 'pair' | 'set'> => {
+    const map = new Map<string, 'pair' | 'set'>()
+    for (const group of auditReport?.toggleGroups ?? []) {
+      for (const id of group.bookmarkIds) {
+        map.set(id, group.kind)
+      }
+    }
+    return map
+  }, [auditReport?.toggleGroups])
+
+  const filteredBookmarks = useMemo(() => {
+    const bookmarks = auditReport?.bookmarks ?? []
+    let result = bookmarks
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      result = result.filter(b => b.name.toLowerCase().includes(q))
+    }
+    if (selectedTypes.length > 0) {
+      result = result.filter(b => selectedTypes.includes(b.type))
+    }
+    if (selectedVisualIds.length > 0) {
+      result = result.filter(b => selectedVisualIds.some(id => b.affectedVisualIds.includes(id)))
+    }
+    return result
+  }, [auditReport?.bookmarks, searchQuery, selectedTypes, selectedVisualIds])
+
+  if (!auditReport) return null
+
+  const selectedBookmark = auditReport.bookmarks.find(b => b.id === selectedBookmarkId) ?? null
+  const pageLayout = auditReport.pageLayout
+  const visuals = pageLayout?.visuals ?? []
+
+  const handleUploadNew = () => {
+    exitDemoMode()
+    selectBookmark(null)
+    clearAudit()
+    clearFilters()
+    sessionCache.clear()
+    navigate('/', { replace: true, state: { focusUpload: true } })
+  }
+
+  const handleListKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const bookmarks = filteredBookmarks
+    if (bookmarks.length === 0) return
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      const next = Math.min(rovingIndexRef.current + 1, bookmarks.length - 1)
+      setRovingIndex(next)
+      rovingIndexRef.current = next
+      itemRefs.current[next]?.focus()
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      const prev = Math.max(rovingIndexRef.current - 1, 0)
+      setRovingIndex(prev)
+      rovingIndexRef.current = prev
+      itemRefs.current[prev]?.focus()
+    } else if (e.key === 'Escape') {
+      e.preventDefault()
+      selectBookmark(null)
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      const current = rovingIndexRef.current
+      if (current < 0 || current >= bookmarks.length) return
+      const focusedId = bookmarks[current].id
+      selectBookmark(selectedBookmarkId === focusedId ? null : focusedId)
+    }
+  }
+
+  return (
+    <>
+      <a
+        href="#bookmark-list"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-1/2 focus:-translate-x-1/2 focus:z-50 focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white focus:bg-indigo-500 focus:rounded-md focus:shadow-lg"
+      >
+        Skip to bookmark list
+      </a>
+      <header className="flex items-center justify-between px-6 py-4 border-b border-border-subtle shrink-0">
+        <div className="flex items-center gap-3">
+          <span className="font-mono text-sm text-text-secondary truncate max-w-[240px]">
+            {auditReport.filename ?? 'Unknown Report'}
+          </span>
+          <span className="text-text-muted text-sm">
+            {auditReport.bookmarks.length} bookmarks
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleUploadNew}
+            className="text-sm font-medium text-white bg-indigo-500 hover:bg-indigo-400 rounded-md px-3 py-1.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-500"
+          >
+            Upload New File
+          </button>
+          <ThemeToggle />
+        </div>
+      </header>
+      <main className="flex flex-1 overflow-hidden">
+        <nav
+          aria-label="Bookmark navigation"
+          className="w-[220px] shrink-0 flex flex-col border-r border-border-subtle overflow-hidden"
+        >
+          <BookmarkSearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            onClear={() => setSearchQuery('')}
+          />
+          <div className="px-3 py-2 border-b border-border-subtle flex items-center gap-2 shrink-0">
+            <BookmarkTypeFilter selectedTypes={selectedTypes} onToggleType={toggleType} />
+            {visuals.length > 0 && (
+              <BookmarkVisualFilter
+                visuals={visuals}
+                selectedVisualIds={selectedVisualIds}
+                onToggleVisual={toggleVisual}
+              />
+            )}
+            {(selectedTypes.length > 0 || selectedVisualIds.length > 0) && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="ml-auto text-xs text-text-secondary hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
+          {(auditReport.parseWarnings?.length ?? 0) > 0 && (
+            <div role="status" className="px-3 py-2 text-xs text-text-secondary border-b border-border-subtle">
+              <span aria-hidden="true">⚠</span>{' '}Some bookmarks could not be fully parsed.
+            </div>
+          )}
+          <div
+            id="bookmark-list"
+            tabIndex={-1}
+            role="listbox"
+            aria-label="Bookmark navigation"
+            onKeyDown={handleListKeyDown}
+            onFocus={(e) => {
+              if (e.target === e.currentTarget) {
+                rovingIndexRef.current = -1
+                return
+              }
+              const index = itemRefs.current.findIndex((el) => el === e.target)
+              if (index >= 0) {
+                setRovingIndex(index)
+                rovingIndexRef.current = index
+              }
+            }}
+            className="flex-1 overflow-y-auto py-1"
+          >
+            {(searchQuery.trim() !== '' || selectedTypes.length > 0 || selectedVisualIds.length > 0) && filteredBookmarks.length === 0 ? (
+              <div className="px-3 py-6 flex flex-col items-center gap-3">
+                <Search className="w-5 h-5 text-text-muted" aria-hidden="true" />
+                <p className="text-sm text-text-muted text-center">No bookmarks match these filters</p>
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="text-xs text-text-secondary hover:text-text-primary border border-border-subtle rounded px-2 py-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                >
+                  Clear all filters
+                </button>
+              </div>
+            ) : (
+              filteredBookmarks.map((bookmark, index) => (
+                <BookmarkListItem
+                  key={bookmark.id}
+                  ref={(el) => { itemRefs.current[index] = el }}
+                  bookmark={bookmark}
+                  toggleKind={toggleKindMap.get(bookmark.id)}
+                  isSelected={selectedBookmarkId === bookmark.id}
+                  tabIndex={rovingIndex === index ? 0 : -1}
+                  onClick={() => {
+                    setRovingIndex(index)
+                    rovingIndexRef.current = index
+                    selectBookmark(selectedBookmarkId === bookmark.id ? null : bookmark.id)
+                  }}
+                />
+              ))
+            )}
+          </div>
+        </nav>
+        <section
+          aria-label="Report wireframe"
+          className="flex-1 overflow-hidden flex flex-col"
+        >
+          {pageLayout ? (
+            <>
+              <div className="flex-1 overflow-hidden relative">
+                <WireframeCanvas pageLayout={pageLayout} />
+              </div>
+              {selectedBookmark && (
+                <div className="h-64 shrink-0 border-t border-border-subtle overflow-y-auto">
+                  <BookmarkDetail bookmark={selectedBookmark} />
+                </div>
+              )}
+            </>
+          ) : selectedBookmark ? (
+            <BookmarkDetail bookmark={selectedBookmark} />
+          ) : (
+            <div className="h-full flex items-center justify-center">
+              <p className="text-sm text-text-muted">Select a bookmark to see details</p>
+            </div>
+          )}
+        </section>
+      </main>
+    </>
+  )
+}

@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /audit
+
+Sitemap: https://pbibookmark.app/sitemap.xml
