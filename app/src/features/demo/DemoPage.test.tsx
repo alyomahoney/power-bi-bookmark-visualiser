@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { useAuditStore } from '@/store/auditStore'
 import { useDemoStore } from '@/store/demoStore'
 import { useFilterStore } from '@/store/filterStore'
+import { useUiStore } from '@/store/uiStore'
 import sampleData from '@/features/demo/sampleReports/sample.json'
 import type { AuditReport } from '@/types/audit'
 import DemoPage from './DemoPage'
@@ -70,6 +71,11 @@ describe('DemoPage', () => {
     useDemoStore.setState({ ...useDemoStore.getState(), loadDemoReport: loadSpy })
     render(<DemoPage />)
     expect(loadSpy).toHaveBeenCalledOnce()
+  })
+
+  it('renders app title "Power BI Bookmark Visualiser" in the header', () => {
+    render(<DemoPage />)
+    expect(screen.getByText('Power BI Bookmark Visualiser')).toBeInTheDocument()
   })
 
   it('renders Demo mode indicator', () => {
@@ -155,5 +161,71 @@ describe('DemoPage — skip navigation link', () => {
     const container = document.getElementById('bookmark-list')!
     container.focus()
     expect(document.activeElement).toBe(container)
+  })
+
+  it('filename span does not truncate — full report name is always visible', () => {
+    render(<DemoPage />)
+    const filenameEl = screen.getByText('Sales Dashboard Demo')
+    expect(filenameEl.classList.contains('truncate')).toBe(false)
+    expect(filenameEl.classList.contains('max-w-[240px]')).toBe(false)
+  })
+})
+
+describe('DemoPage — bookmark grouping sections', () => {
+  beforeEach(() => {
+    useAuditStore.setState({ auditReport: sampleData as AuditReport })
+    useDemoStore.setState({ isDemoMode: false, loadDemoReport: vi.fn(), exitDemoMode: vi.fn() })
+    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIds: [] })
+  })
+
+  afterEach(() => {
+    useAuditStore.setState({ auditReport: null })
+  })
+
+  it('renders "All Visuals" section header for sample data (bm-north-region, bm-south-region)', () => {
+    render(<DemoPage />)
+    expect(screen.getByText('All Visuals')).toBeInTheDocument()
+  })
+
+  it('renders "Selected Visuals" section header for sample data (bm-chart-view, bm-table-view, bm-executive-view, bm-top-products-focus)', () => {
+    render(<DemoPage />)
+    expect(screen.getByText('Selected Visuals')).toBeInTheDocument()
+  })
+})
+
+describe('DemoPage — reset to default button', () => {
+  beforeEach(() => {
+    useAuditStore.setState({ auditReport: sampleData as AuditReport })
+    useDemoStore.setState({ isDemoMode: false, loadDemoReport: vi.fn(), exitDemoMode: vi.fn() })
+    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIds: [] })
+    useUiStore.setState({ selectedBookmarkId: null })
+  })
+
+  afterEach(() => {
+    useAuditStore.setState({ auditReport: null })
+    useUiStore.setState({ selectedBookmarkId: null })
+  })
+
+  it('renders "Reset to Default" button', () => {
+    render(<DemoPage />)
+    expect(screen.getByRole('button', { name: /reset to default/i })).toBeInTheDocument()
+  })
+
+  it('button is disabled when no bookmark is selected', () => {
+    render(<DemoPage />)
+    expect(screen.getByRole('button', { name: /reset to default/i })).toBeDisabled()
+  })
+
+  it('button is enabled when a bookmark is selected', () => {
+    useUiStore.setState({ selectedBookmarkId: 'bm-chart-view' })
+    render(<DemoPage />)
+    expect(screen.getByRole('button', { name: /reset to default/i })).not.toBeDisabled()
+  })
+
+  it('clicking Reset to Default clears selectedBookmarkId', () => {
+    useUiStore.setState({ selectedBookmarkId: 'bm-chart-view' })
+    render(<DemoPage />)
+    fireEvent.click(screen.getByRole('button', { name: /reset to default/i }))
+    expect(useUiStore.getState().selectedBookmarkId).toBeNull()
   })
 })

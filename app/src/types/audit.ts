@@ -20,6 +20,7 @@ export interface Bookmark {
   affectedVisualIds: string[]
   hiddenVisualIds: string[]
   suppressDisplay: boolean
+  applyOnlyToTargetVisuals: boolean
   filterState: unknown
   rawPayload: {
     options: BookmarkOptions

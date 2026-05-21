@@ -2,14 +2,18 @@ import { describe, it, expect } from 'vitest'
 import {
   getVisualCategory,
   getVisualDisplayName,
+  getVisualIcon,
   VISUAL_TYPE_CATEGORY,
   VISUAL_DISPLAY_NAME,
+  PLACEHOLDER_ICON,
 } from './visualTypes'
 
 describe('getVisualCategory', () => {
   describe('charts', () => {
     it.each(['clusteredColumnChart', 'columnChart', 'clusteredBarChart', 'barChart',
-             'lineChart', 'areaChart', 'waterfallChart', 'funnel', 'scatterChart'])(
+             'lineChart', 'areaChart', 'waterfallChart', 'funnel', 'scatterChart',
+             'hundredPercentStackedBarChart', 'hundredPercentStackedColumnChart',
+             'stackedAreaChart', 'ribbonChart'])(
       '%s → charts',
       (type) => expect(getVisualCategory(type)).toBe('charts')
     )
@@ -61,12 +65,30 @@ describe('getVisualCategory', () => {
     })
   })
 
-  it('covers all 20 entries in VISUAL_TYPE_CATEGORY without placeholder', () => {
+  it('covers all 24 entries in VISUAL_TYPE_CATEGORY without placeholder', () => {
     const supportedTypes = Object.keys(VISUAL_TYPE_CATEGORY)
-    expect(supportedTypes).toHaveLength(20)
+    expect(supportedTypes).toHaveLength(24)
     for (const type of supportedTypes) {
       expect(getVisualCategory(type)).not.toBe('placeholder')
     }
+  })
+})
+
+describe('getVisualIcon', () => {
+  it('returns a distinct (non-placeholder) component for every known type', () => {
+    for (const type of Object.keys(VISUAL_TYPE_CATEGORY)) {
+      const Icon = getVisualIcon(type)
+      expect(Icon).not.toBeNull()
+      expect(Icon).not.toBe(PLACEHOLDER_ICON)
+    }
+  })
+
+  it('returns PLACEHOLDER_ICON for an unknown type', () => {
+    expect(getVisualIcon('someUnknownType')).toBe(PLACEHOLDER_ICON)
+  })
+
+  it('returns PLACEHOLDER_ICON for empty string', () => {
+    expect(getVisualIcon('')).toBe(PLACEHOLDER_ICON)
   })
 })
 
@@ -87,6 +109,22 @@ describe('getVisualDisplayName', () => {
     expect(getVisualDisplayName('advancedSlicerVisual')).toBe('Button Slicer')
   })
 
+  it('returns 100% Stacked Bar for hundredPercentStackedBarChart', () => {
+    expect(getVisualDisplayName('hundredPercentStackedBarChart')).toBe('100% Stacked Bar')
+  })
+
+  it('returns 100% Stacked Column for hundredPercentStackedColumnChart', () => {
+    expect(getVisualDisplayName('hundredPercentStackedColumnChart')).toBe('100% Stacked Column')
+  })
+
+  it('returns Stacked Area for stackedAreaChart', () => {
+    expect(getVisualDisplayName('stackedAreaChart')).toBe('Stacked Area')
+  })
+
+  it('returns Ribbon for ribbonChart', () => {
+    expect(getVisualDisplayName('ribbonChart')).toBe('Ribbon')
+  })
+
   it('returns Unknown Visual for any unrecognised type', () => {
     expect(getVisualDisplayName('notAVisualType')).toBe('Unknown Visual')
   })
@@ -95,9 +133,9 @@ describe('getVisualDisplayName', () => {
     expect(getVisualDisplayName('')).toBe('Unknown Visual')
   })
 
-  it('covers all 20 entries in VISUAL_DISPLAY_NAME with correct values', () => {
+  it('covers all 24 entries in VISUAL_DISPLAY_NAME with correct values', () => {
     const mappedTypes = Object.keys(VISUAL_DISPLAY_NAME)
-    expect(mappedTypes).toHaveLength(20)
+    expect(mappedTypes).toHaveLength(24)
     for (const type of mappedTypes) {
       expect(getVisualDisplayName(type)).toBe(VISUAL_DISPLAY_NAME[type])
     }

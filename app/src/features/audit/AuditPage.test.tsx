@@ -120,6 +120,22 @@ describe('AuditPage — rendering', () => {
     render(<AuditPage />)
     expect(screen.getByRole('button', { name: /upload new file/i })).toBeInTheDocument()
   })
+
+  it('renders app title "Power BI Bookmark Visualiser" in the header', () => {
+    useAuditStore.setState({ auditReport: makeReport() })
+    render(<AuditPage />)
+    expect(screen.getByText('Power BI Bookmark Visualiser')).toBeInTheDocument()
+  })
+
+  it('filename span does not truncate — full report name is always visible', () => {
+    useAuditStore.setState({
+      auditReport: makeReport({ filename: 'Sales Dashboard For Regional Bookmarks Q4 2025.Report' }),
+    })
+    render(<AuditPage />)
+    const filenameEl = screen.getByText('Sales Dashboard For Regional Bookmarks Q4 2025.Report')
+    expect(filenameEl.classList.contains('truncate')).toBe(false)
+    expect(filenameEl.classList.contains('max-w-[240px]')).toBe(false)
+  })
 })
 
 describe('AuditPage — parse warnings banner', () => {
@@ -771,5 +787,105 @@ describe('AuditPage — skip navigation link', () => {
     container.focus()
     await userEvent.keyboard('{ArrowDown}')
     expect(document.activeElement).toBe(screen.getByRole('option'))
+  })
+})
+
+describe('AuditPage — bookmark grouping sections', () => {
+  beforeEach(() => {
+    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIds: [] })
+  })
+
+  it('renders "All Visuals" section header when at least one bookmark has applyOnlyToTargetVisuals: false', () => {
+    const b = buildBookmark().withId('bk-1').withName('Global BM').withApplyOnlyToTargetVisuals(false).build()
+    useAuditStore.setState({ auditReport: makeReport({ bookmarks: [b] }) })
+    render(<AuditPage />)
+    expect(screen.getByText('All Visuals')).toBeInTheDocument()
+  })
+
+  it('renders "Selected Visuals" section header when at least one bookmark has applyOnlyToTargetVisuals: true', () => {
+    const b = buildBookmark().withId('bk-1').withName('Targeted BM').withApplyOnlyToTargetVisuals(true).build()
+    useAuditStore.setState({ auditReport: makeReport({ bookmarks: [b] }) })
+    render(<AuditPage />)
+    expect(screen.getByText('Selected Visuals')).toBeInTheDocument()
+  })
+
+  it('hides "Selected Visuals" section when all bookmarks have applyOnlyToTargetVisuals: false', () => {
+    const b = buildBookmark().withId('bk-1').withName('Global BM').withApplyOnlyToTargetVisuals(false).build()
+    useAuditStore.setState({ auditReport: makeReport({ bookmarks: [b] }) })
+    render(<AuditPage />)
+    expect(screen.queryByText('Selected Visuals')).not.toBeInTheDocument()
+  })
+
+  it('hides "All Visuals" section when all bookmarks have applyOnlyToTargetVisuals: true', () => {
+    const b = buildBookmark().withId('bk-1').withName('Targeted BM').withApplyOnlyToTargetVisuals(true).build()
+    useAuditStore.setState({ auditReport: makeReport({ bookmarks: [b] }) })
+    render(<AuditPage />)
+    expect(screen.queryByText('All Visuals')).not.toBeInTheDocument()
+  })
+
+  it('hides a section when filter reduces it to zero matches', async () => {
+    const b1 = buildBookmark().withId('bk-1').withName('Global BM').withApplyOnlyToTargetVisuals(false).build()
+    const b2 = buildBookmark().withId('bk-2').withName('Targeted BM').withApplyOnlyToTargetVisuals(true).build()
+    useAuditStore.setState({ auditReport: makeReport({ bookmarks: [b1, b2] }) })
+    render(<AuditPage />)
+    await userEvent.type(screen.getByRole('textbox', { name: /search bookmarks/i }), 'Global')
+    expect(screen.getByText('All Visuals')).toBeInTheDocument()
+    expect(screen.queryByText('Selected Visuals')).not.toBeInTheDocument()
+  })
+
+  it('ArrowDown navigates continuously from last item in "All Visuals" into first item in "Selected Visuals"', async () => {
+    const b1 = buildBookmark().withId('bk-1').withName('Global BM').withApplyOnlyToTargetVisuals(false).build()
+    const b2 = buildBookmark().withId('bk-2').withName('Targeted BM').withApplyOnlyToTargetVisuals(true).build()
+    useAuditStore.setState({ auditReport: makeReport({ bookmarks: [b1, b2] }) })
+    render(<AuditPage />)
+    const options = screen.getAllByRole('option')
+    options[0].focus()
+    await userEvent.keyboard('{ArrowDown}')
+    expect(options[1]).toHaveFocus()
+  })
+})
+
+describe('AuditPage — reset to default button', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    useAuditStore.setState({ auditReport: null })
+    useUiStore.setState({ selectedBookmarkId: null })
+    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIds: [] })
+  })
+
+  it('renders "Reset to Default" button when pageLayout is present', () => {
+    useAuditStore.setState({ auditReport: makeReport({ pageLayout: makePageLayout(['v-1']) }) })
+    render(<AuditPage />)
+    expect(screen.getByRole('button', { name: /reset to default/i })).toBeInTheDocument()
+  })
+
+  it('does NOT render "Reset to Default" button when pageLayout is absent', () => {
+    useAuditStore.setState({ auditReport: makeReport() })
+    render(<AuditPage />)
+    expect(screen.queryByRole('button', { name: /reset to default/i })).not.toBeInTheDocument()
+  })
+
+  it('button is disabled when no bookmark is selected', () => {
+    useAuditStore.setState({ auditReport: makeReport({ pageLayout: makePageLayout(['v-1']) }) })
+    useUiStore.setState({ selectedBookmarkId: null })
+    render(<AuditPage />)
+    expect(screen.getByRole('button', { name: /reset to default/i })).toBeDisabled()
+  })
+
+  it('button is enabled when a bookmark is selected', () => {
+    const bk = buildBookmark().withId('bk-1').build()
+    useAuditStore.setState({ auditReport: makeReport({ bookmarks: [bk], pageLayout: makePageLayout(['v-1']) }) })
+    useUiStore.setState({ selectedBookmarkId: 'bk-1' })
+    render(<AuditPage />)
+    expect(screen.getByRole('button', { name: /reset to default/i })).not.toBeDisabled()
+  })
+
+  it('clicking Reset to Default clears selectedBookmarkId', async () => {
+    const bk = buildBookmark().withId('bk-1').build()
+    useAuditStore.setState({ auditReport: makeReport({ bookmarks: [bk], pageLayout: makePageLayout(['v-1']) }) })
+    useUiStore.setState({ selectedBookmarkId: 'bk-1' })
+    render(<AuditPage />)
+    await userEvent.click(screen.getByRole('button', { name: /reset to default/i }))
+    expect(useUiStore.getState().selectedBookmarkId).toBeNull()
   })
 })

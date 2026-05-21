@@ -36,3 +36,7 @@ src/
 - Coverage thresholds: statements 80%, branches 75%
 
 See `../_bmad-output/project-context.md` for the full AI agent rules and implementation conventions.
+
+## Built with AI
+
+Built with [Claude Code](https://claude.ai/code) and the [BMAD Method](https://bmad.dev).

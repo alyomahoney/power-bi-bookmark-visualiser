@@ -54,6 +54,10 @@ Plausible is cookieless and GDPR-compliant by design. The full source of the ana
 
 Telemetry is disabled automatically when the `VITE_PLAUSIBLE_DOMAIN` environment variable is absent (e.g. during local development).
 
+## Built with AI
+
+This project was built using [Claude Code](https://claude.ai/code) and the [BMAD Method](https://bmad.dev), an AI-assisted software development workflow. The BMAD Method structures LLM-assisted development through documented planning artifacts, sprint tracking, and agent-driven implementation — enabling a single developer to produce a fully tested, production-ready application.
+
 ## Licence
 
 See [LICENSE](LICENSE).

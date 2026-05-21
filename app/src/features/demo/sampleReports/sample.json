@@ -8,6 +8,7 @@
       "affectedVisualIds": ["salesLineChart", "salesTable"],
       "hiddenVisualIds": ["salesTable"],
       "suppressDisplay": false,
+      "applyOnlyToTargetVisuals": true,
       "filterState": null,
       "rawPayload": {
         "options": {
@@ -35,6 +36,7 @@
       "affectedVisualIds": ["salesLineChart", "salesTable"],
       "hiddenVisualIds": ["salesLineChart"],
       "suppressDisplay": false,
+      "applyOnlyToTargetVisuals": true,
       "filterState": null,
       "rawPayload": {
         "options": {
@@ -62,6 +64,7 @@
       "affectedVisualIds": [],
       "hiddenVisualIds": [],
       "suppressDisplay": true,
+      "applyOnlyToTargetVisuals": false,
       "filterState": null,
       "rawPayload": {
         "options": { "suppressData": false, "suppressDisplay": true },
@@ -75,6 +78,7 @@
       "affectedVisualIds": [],
       "hiddenVisualIds": [],
       "suppressDisplay": true,
+      "applyOnlyToTargetVisuals": false,
       "filterState": null,
       "rawPayload": {
         "options": { "suppressData": false, "suppressDisplay": true },
@@ -88,6 +92,7 @@
       "affectedVisualIds": ["regionMap", "salesLineChart", "categoryTreemap", "revKpi", "marginKpi", "growthKpi"],
       "hiddenVisualIds": ["regionMap", "salesLineChart", "categoryTreemap"],
       "suppressDisplay": false,
+      "applyOnlyToTargetVisuals": true,
       "filterState": null,
       "rawPayload": {
         "options": {
@@ -116,6 +121,7 @@
       "affectedVisualIds": ["regionMap", "salesTable", "productBarChart"],
       "hiddenVisualIds": ["regionMap", "salesTable"],
       "suppressDisplay": false,
+      "applyOnlyToTargetVisuals": true,
       "filterState": null,
       "rawPayload": {
         "options": {

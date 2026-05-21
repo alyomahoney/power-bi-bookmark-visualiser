@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useLocation, Link } from 'react-router'
 import { ThemeToggle } from '@/shared/components/ThemeToggle'
+import { AppLogo } from '@/shared/components/AppLogo'
 import { UploadZone } from './UploadZone'
 import { FileSizeWarning } from './FileSizeWarning'
 import { ParseProgressState } from './ParseProgressState'
@@ -9,6 +10,7 @@ import { MalformedFileError } from './MalformedFileError'
 import { MAX_FILE_SIZE_MB } from '@/constants/config'
 import { useParserWorker } from '@/workers/useParserWorker'
 import { useIsParsing, useParseProgressStep, useParseError, useClearParseError } from '@/store/hooks'
+import { AppFooter } from '@/shared/components/AppFooter'
 
 export default function UploadPage() {
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
@@ -58,7 +60,7 @@ export default function UploadPage() {
   return (
     <>
       <header className="flex items-center justify-between px-6 py-4">
-        <h1 className="text-2xl font-semibold text-text-primary">Power BI Bookmark Visualiser</h1>
+        <h1><AppLogo /></h1>
         <ThemeToggle />
       </header>
       <main>
@@ -74,18 +76,22 @@ export default function UploadPage() {
               fileSize={pendingFiles[0]?.size}
             />
           ) : (
-            <div className="flex flex-col items-center gap-4">
+            <div className="flex flex-col items-center gap-6">
               <UploadZone ref={uploadZoneRef} onFilesSelected={handleFilesSelected} />
               {!showSizeWarning && (
-                <p className="text-sm text-text-muted">
-                  Want to explore first?{' '}
+                <div className="flex flex-col items-center gap-3 w-full max-w-xs">
+                  <div className="flex items-center gap-3 w-full">
+                    <div className="flex-1 h-px bg-border-subtle" aria-hidden="true" />
+                    <span className="text-xs text-text-muted">or</span>
+                    <div className="flex-1 h-px bg-border-subtle" aria-hidden="true" />
+                  </div>
                   <Link
                     to="/demo"
-                    className="text-text-secondary underline-offset-2 hover:text-text-primary hover:underline transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:rounded"
+                    className="inline-flex items-center justify-center w-full rounded-lg border border-border-subtle bg-bg-surface px-6 py-3 text-sm font-medium text-text-primary transition-colors hover:border-border-strong hover:bg-bg-elevated focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base"
                   >
                     Try the demo
                   </Link>
-                </p>
+                </div>
               )}
             </div>
           )}
@@ -98,6 +104,7 @@ export default function UploadPage() {
           />
         )}
       </main>
+      <AppFooter />
     </>
   )
 }

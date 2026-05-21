@@ -18,9 +18,10 @@ import {
 } from '@/store/hooks'
 import { sessionCache } from '@/shared/utils/sessionCache'
 import { ThemeToggle } from '@/shared/components/ThemeToggle'
-import { BookmarkListItem } from '@/features/audit/BookmarkListItem'
+import { AppLogo } from '@/shared/components/AppLogo'
 import { BookmarkDetail } from '@/features/audit/BookmarkDetail'
 import { BookmarkSearchInput } from '@/features/audit/BookmarkSearchInput'
+import { GroupedBookmarkList } from '@/features/audit/GroupedBookmarkList'
 import { BookmarkTypeFilter } from '@/features/audit/BookmarkTypeFilter'
 import { BookmarkVisualFilter } from '@/features/audit/BookmarkVisualFilter'
 import { WireframeCanvas } from '@/features/wireframe/WireframeCanvas'
@@ -96,6 +97,10 @@ export default function DemoPage() {
 
   if (!auditReport) return null
 
+  const allVisualsBookmarks = filteredBookmarks.filter(b => !b.applyOnlyToTargetVisuals)
+  const selectedVisualsBookmarks = filteredBookmarks.filter(b => b.applyOnlyToTargetVisuals)
+  const renderedBookmarks = [...allVisualsBookmarks, ...selectedVisualsBookmarks]
+
   const selectedBookmark = auditReport.bookmarks.find(b => b.id === selectedBookmarkId) ?? null
   const pageLayout = auditReport.pageLayout
   const visuals = pageLayout?.visuals ?? []
@@ -110,11 +115,10 @@ export default function DemoPage() {
   }
 
   const handleListKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    const bookmarks = filteredBookmarks
-    if (bookmarks.length === 0) return
+    if (renderedBookmarks.length === 0) return
     if (e.key === 'ArrowDown') {
       e.preventDefault()
-      const next = Math.min(rovingIndexRef.current + 1, bookmarks.length - 1)
+      const next = Math.min(rovingIndexRef.current + 1, renderedBookmarks.length - 1)
       setRovingIndex(next)
       rovingIndexRef.current = next
       itemRefs.current[next]?.focus()
@@ -130,8 +134,8 @@ export default function DemoPage() {
     } else if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
       const current = rovingIndexRef.current
-      if (current < 0 || current >= bookmarks.length) return
-      const focusedId = bookmarks[current].id
+      if (current < 0 || current >= renderedBookmarks.length) return
+      const focusedId = renderedBookmarks[current].id
       selectBookmark(selectedBookmarkId === focusedId ? null : focusedId)
     }
   }
@@ -145,18 +149,19 @@ export default function DemoPage() {
         Skip to bookmark list
       </a>
       <header className="flex items-center justify-between px-6 py-4 border-b border-border-subtle shrink-0">
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-semibold uppercase tracking-wide text-indigo-400 bg-indigo-500/10 rounded-full px-2 py-0.5">
+        <h1><AppLogo /></h1>
+        <div className="flex items-center gap-4">
+          <span className="text-xs font-semibold uppercase tracking-wide text-indigo-400 bg-indigo-500/10 rounded-full px-2 py-0.5 shrink-0">
             Demo
           </span>
-          <span className="font-mono text-sm text-text-secondary truncate max-w-[240px]">
-            {auditReport.filename ?? 'Unknown Report'}
-          </span>
-          <span className="text-text-muted text-sm">
-            {auditReport.bookmarks.length} bookmarks
-          </span>
-        </div>
-        <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-0.5 min-w-0 text-right">
+            <span className="font-mono text-sm text-text-secondary break-words">
+              {auditReport.filename ?? 'Unknown Report'}
+            </span>
+            <span className="text-text-muted text-xs">
+              {auditReport.bookmarks.length} bookmarks
+            </span>
+          </div>
           <button
             onClick={handleUploadOwn}
             className="text-sm font-medium text-white bg-indigo-500 hover:bg-indigo-400 rounded-md px-3 py-1.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-500"
@@ -232,21 +237,17 @@ export default function DemoPage() {
                 </button>
               </div>
             ) : (
-              filteredBookmarks.map((bookmark, index) => (
-                <BookmarkListItem
-                  key={bookmark.id}
-                  ref={(el) => { itemRefs.current[index] = el }}
-                  bookmark={bookmark}
-                  toggleKind={toggleKindMap.get(bookmark.id)}
-                  isSelected={selectedBookmarkId === bookmark.id}
-                  tabIndex={rovingIndex === index ? 0 : -1}
-                  onClick={() => {
-                    setRovingIndex(index)
-                    rovingIndexRef.current = index
-                    selectBookmark(selectedBookmarkId === bookmark.id ? null : bookmark.id)
-                  }}
-                />
-              ))
+              <GroupedBookmarkList
+                allVisualsBookmarks={allVisualsBookmarks}
+                selectedVisualsBookmarks={selectedVisualsBookmarks}
+                toggleKindMap={toggleKindMap}
+                selectedBookmarkId={selectedBookmarkId}
+                rovingIndex={rovingIndex}
+                itemRefs={itemRefs}
+                rovingIndexRef={rovingIndexRef}
+                setRovingIndex={setRovingIndex}
+                selectBookmark={selectBookmark}
+              />
             )}
           </div>
         </nav>
@@ -256,6 +257,16 @@ export default function DemoPage() {
         >
           {pageLayout ? (
             <>
+              <div className="px-4 py-2 border-b border-border-subtle shrink-0 flex items-center justify-end">
+                <button
+                  type="button"
+                  onClick={() => selectBookmark(null)}
+                  disabled={!selectedBookmarkId}
+                  className="text-xs font-medium text-text-secondary hover:text-text-primary border border-border-subtle rounded px-2 py-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Reset to Default
+                </button>
+              </div>
               <div className="flex-1 overflow-hidden relative">
                 <WireframeCanvas pageLayout={pageLayout} />
               </div>

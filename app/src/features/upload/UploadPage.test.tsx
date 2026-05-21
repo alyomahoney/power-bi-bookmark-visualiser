@@ -304,5 +304,44 @@ describe('UploadPage — demo link focus indicator', () => {
     const demoLink = screen.getByRole('link', { name: /try the demo/i })
     expect(demoLink.className).toContain('focus-visible:ring-2')
     expect(demoLink.className).toContain('focus-visible:ring-indigo-500')
+    expect(demoLink.className).toContain('focus-visible:ring-offset-2')
+  })
+})
+
+describe('UploadPage — demo entry point prominence (Story 9.5)', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+    vi.clearAllMocks()
+    useUiStore.setState({ isParsing: false, parseProgressStep: null, parseError: null })
+  })
+
+  it("renders 'or' divider separating upload zone and demo entry in idle state", () => {
+    render(<UploadPage />)
+    expect(screen.getByText('or')).toBeInTheDocument()
+  })
+
+  it('demo entry is styled as a card — not small inline fine print', () => {
+    render(<UploadPage />)
+    const demoLink = screen.getByRole('link', { name: /try the demo/i })
+    expect(demoLink.className).toMatch(/\bborder\b/)
+    expect(demoLink.className).toContain('rounded-lg')
+  })
+
+  it("'or' divider is NOT shown when showSizeWarning is active", () => {
+    render(<UploadPage />)
+    selectFile(makeFile(LARGE_SIZE))
+    expect(screen.queryByText('or')).not.toBeInTheDocument()
+  })
+
+  it("'or' divider is NOT shown when isParsing", () => {
+    useUiStore.setState({ isParsing: true })
+    render(<UploadPage />)
+    expect(screen.queryByText('or')).not.toBeInTheDocument()
+  })
+
+  it("'or' divider is NOT shown when parseError is set", () => {
+    useUiStore.setState({ parseError: { code: 'MALFORMED_FILE', message: 'bad file' } })
+    render(<UploadPage />)
+    expect(screen.queryByText('or')).not.toBeInTheDocument()
   })
 })

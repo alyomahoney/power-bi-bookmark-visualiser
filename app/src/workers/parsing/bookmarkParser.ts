@@ -158,6 +158,7 @@ export async function parseBookmarks(
         affectedVisualIds,
         hiddenVisualIds: parseHiddenVisualIds(parsed.explorationState ?? null),
         suppressDisplay: options.suppressDisplay === true,
+        applyOnlyToTargetVisuals: options.applyOnlyToTargetVisuals === true,
         filterState: parsed.explorationState ?? null,
         rawPayload,
       })

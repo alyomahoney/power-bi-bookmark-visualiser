@@ -22,8 +22,9 @@ export function WireframeCanvas({ pageLayout }: WireframeCanvasProps) {
 
   const selectedBookmark =
     auditReport?.bookmarks.find((b) => b.id === selectedBookmarkId) ?? null
-  const isNoOp = selectedBookmark?.suppressDisplay === true
-  const isBookmarkActive = Boolean(selectedBookmark && !isNoOp)
+  const isBookmarkActive = Boolean(selectedBookmark)
+  const isDataType = selectedBookmark?.type === 'data' || selectedBookmark?.type === 'mixed'
+  const isDisplayType = selectedBookmark?.type === 'display' || selectedBookmark?.type === 'mixed'
 
   const hiddenSet = new Set(isBookmarkActive ? selectedBookmark!.hiddenVisualIds : [])
   const targetSet = new Set(isBookmarkActive ? selectedBookmark!.affectedVisualIds : [])
@@ -37,42 +38,64 @@ export function WireframeCanvas({ pageLayout }: WireframeCanvasProps) {
   const { width: canvasWidth, height: canvasHeight } = getCanvasDimensions(pageLayout)
 
   return (
-    <div style={{ width: '100%', aspectRatio: `${canvasWidth} / ${canvasHeight}`, position: 'relative' }}>
-      <motion.svg
-        viewBox="0 0 100 100"
-        preserveAspectRatio="xMidYMid meet"
-        width="100%"
-        height="100%"
-        data-canvas-state={canvasState}
+    <div
+      style={{
+        position: 'absolute',
+        inset: 0,
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+      }}
+    >
+      <div
         style={{
-          display: 'block',
-          position: 'absolute',
-          inset: 0,
-          pointerEvents: isAnimating ? 'none' : 'auto',
+          aspectRatio: `${canvasWidth} / ${canvasHeight}`,
+          width: '100%',
+          maxWidth: '100%',
+          maxHeight: '100%',
+          position: 'relative',
+          backgroundColor: 'var(--color-canvas-surround)',
         }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.25, ease: 'easeOut' }}
       >
-        {pageLayout.visuals.map((visual, index) => {
-          const isHidden = hiddenSet.has(visual.id)
-          const isAffected = !isHidden && targetSet.has(visual.id)
-          const opacity = isHidden ? 0.12 : 1
+        <motion.svg
+          viewBox="0 0 100 100"
+          preserveAspectRatio="xMidYMid meet"
+          width="100%"
+          height="100%"
+          data-canvas-state={canvasState}
+          style={{
+            display: 'block',
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: isAnimating ? 'none' : 'auto',
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.25, ease: 'easeOut' }}
+        >
+          {pageLayout.visuals.map((visual, index) => {
+            const isHidden = hiddenSet.has(visual.id)
+            const isAffected = !isHidden && targetSet.has(visual.id)
+            const showRing = isAffected && isDisplayType
+            const isDataAffected = isAffected && isDataType
+            const opacity = isHidden ? 0.12 : 1
 
-          return (
-            <VisualCard
-              key={visual.id}
-              visual={visual}
-              normPos={normalisePosition(visual.position, canvasWidth, canvasHeight)}
-              index={index}
-              opacity={opacity}
-              isAffected={isAffected}
-              onAnimationStart={index === 0 ? () => setIsAnimating(true) : undefined}
-              onAnimationComplete={index === 0 ? () => setIsAnimating(false) : undefined}
-            />
-          )
-        })}
-      </motion.svg>
+            return (
+              <VisualCard
+                key={visual.id}
+                visual={visual}
+                normPos={normalisePosition(visual.position, canvasWidth, canvasHeight)}
+                index={index}
+                opacity={opacity}
+                isAffected={showRing}
+                isDataAffected={isDataAffected}
+                onAnimationStart={index === 0 ? () => setIsAnimating(true) : undefined}
+                onAnimationComplete={index === 0 ? () => setIsAnimating(false) : undefined}
+              />
+            )
+          })}
+        </motion.svg>
+      </div>
     </div>
   )
 }

@@ -42,4 +42,40 @@ describe('getCanvasDimensions', () => {
     }
     expect(getCanvasDimensions(layout)).toEqual({ width: 1920, height: 1080 })
   })
+
+  it('returns default width when canvasWidth is 0', () => {
+    const layout: PageLayout = {
+      pageId: 'pg1', pageDisplayName: 'Test',
+      canvasWidth: 0, canvasHeight: 720,
+      visuals: [],
+    }
+    expect(getCanvasDimensions(layout)).toEqual({ width: 1280, height: 720 })
+  })
+
+  it('returns default height when canvasHeight is 0', () => {
+    const layout: PageLayout = {
+      pageId: 'pg1', pageDisplayName: 'Test',
+      canvasWidth: 1280, canvasHeight: 0,
+      visuals: [],
+    }
+    expect(getCanvasDimensions(layout)).toEqual({ width: 1280, height: 720 })
+  })
+
+  it('returns default width when canvasWidth is negative', () => {
+    const layout: PageLayout = {
+      pageId: 'pg1', pageDisplayName: 'Test',
+      canvasWidth: -1, canvasHeight: 720,
+      visuals: [],
+    }
+    expect(getCanvasDimensions(layout)).toEqual({ width: 1280, height: 720 })
+  })
+
+  it('returns default height when canvasHeight is negative', () => {
+    const layout: PageLayout = {
+      pageId: 'pg1', pageDisplayName: 'Test',
+      canvasWidth: 1280, canvasHeight: -1,
+      visuals: [],
+    }
+    expect(getCanvasDimensions(layout)).toEqual({ width: 1280, height: 720 })
+  })
 })

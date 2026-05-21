@@ -17,5 +17,7 @@ export function normalisePosition(
 
 export function getCanvasDimensions(layout?: PageLayout): { width: number; height: number } {
   if (!layout) return PBIR_DEFAULT_CANVAS
-  return { width: layout.canvasWidth, height: layout.canvasHeight }
+  const width = layout.canvasWidth > 0 ? layout.canvasWidth : PBIR_DEFAULT_CANVAS.width
+  const height = layout.canvasHeight > 0 ? layout.canvasHeight : PBIR_DEFAULT_CANVAS.height
+  return { width, height }
 }

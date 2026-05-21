@@ -309,6 +309,26 @@ describe('parseBookmarks', () => {
     })
   })
 
+  describe('applyOnlyToTargetVisuals', () => {
+    it('sets applyOnlyToTargetVisuals to true when options.applyOnlyToTargetVisuals is true', async () => {
+      const entries = [
+        makeBookmarksJsonEntry([{ name: BK_ID }]),
+        makeBookmarkEntry(BK_ID, { name: BK_ID, displayName: 'Bookmark One', options: { applyOnlyToTargetVisuals: true, targetVisualNames: ['v1'] } }),
+      ]
+      const { bookmarks } = await parseBookmarks(entries)
+      expect(bookmarks[0].applyOnlyToTargetVisuals).toBe(true)
+    })
+
+    it('sets applyOnlyToTargetVisuals to false when options.applyOnlyToTargetVisuals is absent', async () => {
+      const entries = [
+        makeBookmarksJsonEntry([{ name: BK_ID }]),
+        makeBookmarkEntry(BK_ID, { name: BK_ID, displayName: 'Bookmark One', options: {} }),
+      ]
+      const { bookmarks } = await parseBookmarks(entries)
+      expect(bookmarks[0].applyOnlyToTargetVisuals).toBe(false)
+    })
+  })
+
   describe('edge cases', () => {
     it('treats an item with displayName but no children as an ungrouped bookmark and emits a ParseWarning', async () => {
       const entries = [

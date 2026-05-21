@@ -7,6 +7,7 @@ interface BookmarkBuilder {
   withAffectedVisualIds: (ids: string[]) => BookmarkBuilder
   withHiddenVisualIds: (ids: string[]) => BookmarkBuilder
   withSuppressDisplay: (value: boolean) => BookmarkBuilder
+  withApplyOnlyToTargetVisuals: (value: boolean) => BookmarkBuilder
   withFilterState: (state: unknown) => BookmarkBuilder
   withRawPayload: (payload: Bookmark['rawPayload']) => BookmarkBuilder
   build: () => Bookmark
@@ -20,6 +21,7 @@ export function buildBookmark(): BookmarkBuilder {
     affectedVisualIds: [],
     hiddenVisualIds: [],
     suppressDisplay: false,
+    applyOnlyToTargetVisuals: false,
     filterState: null,
     rawPayload: { options: {}, explorationState: null },
   }
@@ -31,6 +33,7 @@ export function buildBookmark(): BookmarkBuilder {
     withAffectedVisualIds: (ids) => { bookmark.affectedVisualIds = ids; return builder },
     withHiddenVisualIds: (ids) => { bookmark.hiddenVisualIds = ids; return builder },
     withSuppressDisplay: (value) => { bookmark.suppressDisplay = value; return builder },
+    withApplyOnlyToTargetVisuals: (value) => { bookmark.applyOnlyToTargetVisuals = value; return builder },
     withFilterState: (state) => { bookmark.filterState = state; return builder },
     withRawPayload: (payload) => { bookmark.rawPayload = payload; return builder },
     build: () => structuredClone(bookmark),

@@ -17,6 +17,7 @@ function makeToggleBookmark(
     affectedVisualIds: targetVisualIds,
     hiddenVisualIds: hiddenVisualIds,
     suppressDisplay: false,
+    applyOnlyToTargetVisuals: true,
     filterState: null,
     rawPayload: {
       options: {
@@ -46,6 +47,7 @@ describe('detectTogglePairs', () => {
         affectedVisualIds: ['visual-A'],
         hiddenVisualIds: [],
         suppressDisplay: false,
+        applyOnlyToTargetVisuals: false,
         filterState: null,
         rawPayload: {
           options: { suppressData: true, suppressActiveSection: true },
@@ -63,6 +65,7 @@ describe('detectTogglePairs', () => {
         affectedVisualIds: ['visual-A'],
         hiddenVisualIds: [],
         suppressDisplay: false,
+        applyOnlyToTargetVisuals: true,
         filterState: null,
         rawPayload: {
           options: {
@@ -84,6 +87,7 @@ describe('detectTogglePairs', () => {
         affectedVisualIds: ['visual-A'],
         hiddenVisualIds: [],
         suppressDisplay: false,
+        applyOnlyToTargetVisuals: true,
         filterState: null,
         rawPayload: {
           options: {
@@ -105,6 +109,7 @@ describe('detectTogglePairs', () => {
         affectedVisualIds: [],
         hiddenVisualIds: [],
         suppressDisplay: false,
+        applyOnlyToTargetVisuals: true,
         filterState: null,
         rawPayload: {
           options: {
@@ -273,6 +278,7 @@ describe('detectTogglePairs', () => {
         affectedVisualIds: [],
         hiddenVisualIds: [],
         suppressDisplay: false,
+        applyOnlyToTargetVisuals: false,
         filterState: null,
         rawPayload: { options: {}, explorationState: null },
       }
@@ -294,6 +300,7 @@ describe('detectTogglePairs', () => {
         affectedVisualIds: ['visual-A'],
         hiddenVisualIds: [],
         suppressDisplay: false,
+        applyOnlyToTargetVisuals: true,
         filterState: null,
         rawPayload: {
           options: {
@@ -320,6 +327,7 @@ describe('detectTogglePairs', () => {
         affectedVisualIds: ['visual-A'],
         hiddenVisualIds: [],
         suppressDisplay: false,
+        applyOnlyToTargetVisuals: true,
         filterState: null,
         rawPayload: {
           options: {

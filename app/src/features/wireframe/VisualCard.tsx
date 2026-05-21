@@ -1,6 +1,6 @@
 import { motion, useReducedMotion } from 'motion/react'
 import type { VisualElement } from '@/types/audit'
-import { getVisualCategory, getVisualDisplayName } from './visualTypes'
+import { getVisualCategory, getVisualDisplayName, getVisualIcon } from './visualTypes'
 import type { VisualCategory } from './visualTypes'
 
 const CATEGORY_FILL: Record<VisualCategory, string> = {
@@ -18,6 +18,7 @@ interface VisualCardProps {
   index: number
   opacity?: number
   isAffected?: boolean
+  isDataAffected?: boolean
   onAnimationStart?: () => void
   onAnimationComplete?: () => void
 }
@@ -28,6 +29,7 @@ export function VisualCard({
   index,
   opacity = 1,
   isAffected = false,
+  isDataAffected = false,
   onAnimationStart,
   onAnimationComplete,
 }: VisualCardProps) {
@@ -35,6 +37,7 @@ export function VisualCard({
   const { xPct, yPct, wPct, hPct } = normPos
   const category = getVisualCategory(visual.visualType)
   const fill = CATEGORY_FILL[category]
+  const IconComponent = getVisualIcon(visual.visualType)
   const labelFill = category === 'placeholder'
     ? 'var(--color-text-secondary)'
     : 'var(--color-text-primary)'
@@ -56,6 +59,28 @@ export function VisualCard({
         fill={fill} rx={0.5}
         {...(isAffected ? { stroke: 'var(--color-ring)', strokeWidth: 0.3 } : {})}
       />
+      {isDataAffected && (
+        shouldReduceMotion ? (
+          <rect
+            x={xPct} y={yPct} width={wPct} height={hPct}
+            fill="none"
+            stroke="var(--color-data-glow)"
+            strokeWidth={0.3}
+            rx={0.5}
+          />
+        ) : (
+          <motion.rect
+            x={xPct} y={yPct} width={wPct} height={hPct}
+            fill="none"
+            stroke="var(--color-data-glow)"
+            rx={0.5}
+            initial={{ strokeWidth: 0.3, strokeOpacity: 0.6 }}
+            animate={{ strokeWidth: [0.3, 0.8, 0.3], strokeOpacity: [0.6, 1, 0.6] }}
+            transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+          />
+        )
+      )}
+      <IconComponent x={xPct} y={yPct} w={wPct} h={hPct} />
       <text
         x={xPct + wPct / 2}
         y={yPct + hPct / 2 - 0.8}

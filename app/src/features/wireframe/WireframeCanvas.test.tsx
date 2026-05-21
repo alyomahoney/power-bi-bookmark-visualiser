@@ -68,7 +68,7 @@ describe('WireframeCanvas', () => {
       const bk: Bookmark = {
         id: 'bk-rm', name: 'Reduced Motion Test', type: 'display',
         affectedVisualIds: [], hiddenVisualIds: [],
-        suppressDisplay: false, filterState: null,
+        suppressDisplay: false, applyOnlyToTargetVisuals: false, filterState: null,
         rawPayload: { options: {}, explorationState: null },
       }
       useAuditStore.setState({ auditReport: { bookmarks: [bk] } })
@@ -151,6 +151,7 @@ describe('WireframeCanvas', () => {
         affectedVisualIds: [],
         hiddenVisualIds: [],
         suppressDisplay: false,
+        applyOnlyToTargetVisuals: false,
         filterState: null,
         rawPayload: { options: {}, explorationState: null },
         ...overrides,
@@ -169,12 +170,12 @@ describe('WireframeCanvas', () => {
       expect(container.querySelector('svg')).toHaveAttribute('data-canvas-state', 'bookmark-selected')
     })
 
-    it('has data-canvas-state="empty" when selected bookmark has suppressDisplay=true (data bookmark)', () => {
+    it('has data-canvas-state="bookmark-selected" when a data bookmark (suppressDisplay=true) is selected', () => {
       const bk = makeBookmark({ id: 'bk-1', suppressDisplay: true })
       useAuditStore.setState({ auditReport: makeAuditReport([bk]) })
       useUiStore.setState({ selectedBookmarkId: 'bk-1' })
       const { container } = render(<WireframeCanvas pageLayout={makePageLayout(2)} />)
-      expect(container.querySelector('svg')).toHaveAttribute('data-canvas-state', 'empty')
+      expect(container.querySelector('svg')).toHaveAttribute('data-canvas-state', 'bookmark-selected')
     })
 
     it('renders indigo ring stroke on affected visual rect when bookmark is selected', () => {
@@ -266,11 +267,154 @@ describe('WireframeCanvas', () => {
     })
   })
 
+  describe('data bookmark glow indicator', () => {
+    const glowPageLayout: PageLayout = {
+      pageId: 'pg-glow',
+      pageDisplayName: 'Glow Test Page',
+      canvasWidth: 1280,
+      canvasHeight: 720,
+      visuals: [
+        { id: 'v-affected', visualType: 'clusteredColumnChart', position: { x: 0, y: 0, width: 200, height: 150 } },
+        { id: 'v-neutral',  visualType: 'lineChart',            position: { x: 210, y: 0, width: 200, height: 150 } },
+      ],
+    }
+
+    function makeBookmark(overrides: Partial<Bookmark> = {}): Bookmark {
+      return {
+        id: 'bk-glow',
+        name: 'Glow Bookmark',
+        type: 'data',
+        affectedVisualIds: [],
+        hiddenVisualIds: [],
+        suppressDisplay: true,
+        applyOnlyToTargetVisuals: false,
+        filterState: null,
+        rawPayload: { options: {}, explorationState: null },
+        ...overrides,
+      }
+    }
+
+    beforeEach(() => {
+      useUiStore.setState({ selectedBookmarkId: null })
+      useAuditStore.setState({ auditReport: null })
+    })
+
+    afterEach(() => {
+      vi.restoreAllMocks()
+    })
+
+    it("Test A: 'data' type bookmark — amber glow stroke appears on affected visual rect", () => {
+      const bk = makeBookmark({ type: 'data', suppressDisplay: true, affectedVisualIds: ['v-affected'] })
+      useAuditStore.setState({ auditReport: { bookmarks: [bk] } })
+      useUiStore.setState({ selectedBookmarkId: 'bk-glow' })
+      const { container } = render(<WireframeCanvas pageLayout={glowPageLayout} />)
+      const rects = container.querySelectorAll('rect')
+      const glowRect = Array.from(rects).find(r => r.getAttribute('stroke') === 'var(--color-data-glow)')
+      expect(glowRect).toBeInTheDocument()
+    })
+
+    it("Test B: 'data' type bookmark — no indigo ring on affected visual", () => {
+      const bk = makeBookmark({ type: 'data', suppressDisplay: true, affectedVisualIds: ['v-affected'] })
+      useAuditStore.setState({ auditReport: { bookmarks: [bk] } })
+      useUiStore.setState({ selectedBookmarkId: 'bk-glow' })
+      const { container } = render(<WireframeCanvas pageLayout={glowPageLayout} />)
+      const rects = Array.from(container.querySelectorAll('rect'))
+      const ringRect = rects.find(r => r.getAttribute('stroke') === 'var(--color-ring)')
+      expect(ringRect).toBeUndefined()
+    })
+
+    it("Test C: 'display' type bookmark — no amber glow (unchanged behaviour)", () => {
+      const bk = makeBookmark({ type: 'display', suppressDisplay: false, affectedVisualIds: ['v-affected'] })
+      useAuditStore.setState({ auditReport: { bookmarks: [bk] } })
+      useUiStore.setState({ selectedBookmarkId: 'bk-glow' })
+      const { container } = render(<WireframeCanvas pageLayout={glowPageLayout} />)
+      const rects = Array.from(container.querySelectorAll('rect'))
+      const glowRect = rects.find(r => r.getAttribute('stroke') === 'var(--color-data-glow)')
+      expect(glowRect).toBeUndefined()
+    })
+
+    it("Test D: 'mixed' type bookmark — both amber glow AND indigo ring present on affected visual", () => {
+      const bk = makeBookmark({ type: 'mixed', suppressDisplay: false, affectedVisualIds: ['v-affected'], hiddenVisualIds: [] })
+      useAuditStore.setState({ auditReport: { bookmarks: [bk] } })
+      useUiStore.setState({ selectedBookmarkId: 'bk-glow' })
+      const { container } = render(<WireframeCanvas pageLayout={glowPageLayout} />)
+      const rects = Array.from(container.querySelectorAll('rect'))
+      const glowRect = rects.find(r => r.getAttribute('stroke') === 'var(--color-data-glow)')
+      const ringRect = rects.find(r => r.getAttribute('stroke') === 'var(--color-ring)')
+      expect(glowRect).toBeInTheDocument()
+      expect(ringRect).toBeInTheDocument()
+    })
+
+    it('Test E: reduced motion — amber glow is a static rect (no animation)', () => {
+      vi.mocked(useReducedMotion).mockReturnValue(true)
+      const bk = makeBookmark({ type: 'data', suppressDisplay: true, affectedVisualIds: ['v-affected'] })
+      useAuditStore.setState({ auditReport: { bookmarks: [bk] } })
+      useUiStore.setState({ selectedBookmarkId: 'bk-glow' })
+      const { container } = render(<WireframeCanvas pageLayout={glowPageLayout} />)
+      const rects = Array.from(container.querySelectorAll('rect'))
+      const glowRect = rects.find(r => r.getAttribute('stroke') === 'var(--color-data-glow)')
+      expect(glowRect).toBeInTheDocument()
+    })
+
+    it('Test F: hidden visual in a data bookmark does NOT get the glow', () => {
+      const bk = makeBookmark({ type: 'data', suppressDisplay: true, affectedVisualIds: ['v-affected'], hiddenVisualIds: ['v-affected'] })
+      useAuditStore.setState({ auditReport: { bookmarks: [bk] } })
+      useUiStore.setState({ selectedBookmarkId: 'bk-glow' })
+      const { container } = render(<WireframeCanvas pageLayout={glowPageLayout} />)
+      const rects = Array.from(container.querySelectorAll('rect'))
+      const glowRect = rects.find(r => r.getAttribute('stroke') === 'var(--color-data-glow)')
+      expect(glowRect).toBeUndefined()
+    })
+  })
+
   it('uses canvas aspect ratio from pageLayout', () => {
     const { container } = render(
       <WireframeCanvas pageLayout={{ ...makePageLayout(), canvasWidth: 1920, canvasHeight: 1080 }} />
     )
-    const wrapper = container.firstElementChild as HTMLElement
-    expect(wrapper.style.aspectRatio).toBe('1920 / 1080')
+    const surround = container.firstElementChild as HTMLElement
+    const canvasContainer = surround.firstElementChild as HTMLElement
+    expect(canvasContainer.style.aspectRatio).toBe('1920 / 1080')
+  })
+
+  it('canvas report box has dark background CSS variable', () => {
+    const { container } = render(<WireframeCanvas pageLayout={makePageLayout()} />)
+    const surround = container.firstElementChild as HTMLElement
+    const canvasContainer = surround.firstElementChild as HTMLElement
+    expect(canvasContainer.style.backgroundColor).toBe('var(--color-canvas-surround)')
+  })
+
+  it('canvas inner div is constrained by max-width and max-height to prevent overflow', () => {
+    const { container } = render(<WireframeCanvas pageLayout={makePageLayout()} />)
+    const surround = container.firstElementChild as HTMLElement
+    const canvasContainer = surround.firstElementChild as HTMLElement
+    expect(canvasContainer.style.maxWidth).toBe('100%')
+    expect(canvasContainer.style.maxHeight).toBe('100%')
+  })
+
+  describe('visual type icons', () => {
+    it('renders icon SVG elements (line/path/circle) inside each known-type visual card', () => {
+      const { container } = render(<WireframeCanvas pageLayout={makePageLayout(2)} />)
+      // clusteredColumnChart → ColIcon which renders <line> elements
+      const lines = container.querySelectorAll('line')
+      expect(lines.length).toBeGreaterThan(0)
+      // Background card rects are unchanged — icons use line/path/circle only
+      expect(container.querySelectorAll('rect')).toHaveLength(2)
+    })
+
+    it('renders placeholder icon (path/circle) for an unknown visual type, rect count stays at 1', () => {
+      const pageLayout: PageLayout = {
+        pageId: 'pg-test',
+        pageDisplayName: 'Test Page',
+        canvasWidth: 1280,
+        canvasHeight: 720,
+        visuals: [
+          { id: 'v-unknown', visualType: 'someUnknownVisualType', position: { x: 0, y: 0, width: 200, height: 150 } },
+        ],
+      }
+      const { container } = render(<WireframeCanvas pageLayout={pageLayout} />)
+      // PLACEHOLDER_ICON uses path + circle, not rect
+      expect(container.querySelector('path')).toBeInTheDocument()
+      expect(container.querySelectorAll('rect')).toHaveLength(1)
+    })
   })
 })
