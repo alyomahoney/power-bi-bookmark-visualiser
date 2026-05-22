@@ -20,27 +20,18 @@ interface RawVisualJson {
   isHidden?: boolean
 }
 
-export async function parsePageLayout(entries: FileEntry[]): Promise<PageLayout | undefined> {
+async function parseSinglePage(
+  pageEntryMap: Map<string, FileEntry>,
+  visualEntryMap: Map<string, FileEntry[]>,
+  pageId: string,
+): Promise<PageLayout | undefined> {
   try {
-    const pagesEntry = entries.find(e => e.path.endsWith('pages/pages.json'))
-    if (!pagesEntry) return undefined
-
-    const pagesJson = JSON.parse(await pagesEntry.file.text()) as RawPagesJson
-    const activePageId = pagesJson.activePageName
-    if (!activePageId) return undefined
-
-    const pageEntry = entries.find(e =>
-      e.path.includes(`/${activePageId}/`) &&
-      e.path.endsWith('/page.json')
-    )
+    const pageEntry = pageEntryMap.get(pageId)
     if (!pageEntry) return undefined
 
     const pageJson = JSON.parse(await pageEntry.file.text()) as RawPageJson
 
-    const visualEntries = entries.filter(e =>
-      e.path.includes(`/${activePageId}/visuals/`) &&
-      e.path.endsWith('/visual.json'),
-    )
+    const visualEntries = visualEntryMap.get(pageId) ?? []
 
     const visuals: VisualElement[] = []
     for (const ve of visualEntries) {
@@ -79,5 +70,39 @@ export async function parsePageLayout(entries: FileEntry[]): Promise<PageLayout 
     }
   } catch {
     return undefined
+  }
+}
+
+export async function parsePages(entries: FileEntry[]): Promise<{ pages: PageLayout[]; activePageId: string }> {
+  try {
+    const pagesEntry = entries.find(e => e.path.endsWith('pages/pages.json'))
+    if (!pagesEntry) return { pages: [], activePageId: '' }
+
+    const pagesJson = JSON.parse(await pagesEntry.file.text()) as RawPagesJson
+    const pageOrder = pagesJson.pageOrder ?? []
+    const activePageId = pagesJson.activePageName ?? ''
+
+    const pageEntryMap = new Map<string, FileEntry>()
+    const visualEntryMap = new Map<string, FileEntry[]>()
+    for (const e of entries) {
+      const pageMatch = e.path.match(/\/([^/]+)\/page\.json$/)
+      if (pageMatch) {
+        pageEntryMap.set(pageMatch[1], e)
+        continue
+      }
+      const visualMatch = e.path.match(/\/([^/]+)\/visuals\/[^/]+\/visual\.json$/)
+      if (visualMatch) {
+        const arr = visualEntryMap.get(visualMatch[1])
+        if (arr) arr.push(e)
+        else visualEntryMap.set(visualMatch[1], [e])
+      }
+    }
+
+    const settled = await Promise.all(pageOrder.map(id => parseSinglePage(pageEntryMap, visualEntryMap, id)))
+    const pages = settled.filter((p): p is PageLayout => p !== undefined)
+
+    return { pages, activePageId }
+  } catch {
+    return { pages: [], activePageId: '' }
   }
 }

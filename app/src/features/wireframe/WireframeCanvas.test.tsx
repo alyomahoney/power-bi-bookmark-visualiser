@@ -19,24 +19,33 @@ function makePageLayout(visuals = 3): PageLayout {
   }
 }
 
+function makePages(visuals = 3): [PageLayout[], string] {
+  const page = makePageLayout(visuals)
+  return [[page], page.pageId]
+}
+
 describe('WireframeCanvas', () => {
   it('renders an SVG element', () => {
-    const { container } = render(<WireframeCanvas pageLayout={makePageLayout()} />)
+    const [pages, selectedPageId] = makePages()
+    const { container } = render(<WireframeCanvas pages={pages} selectedPageId={selectedPageId} />)
     expect(container.querySelector('svg')).toBeInTheDocument()
   })
 
   it('has data-canvas-state="empty" on the SVG root', () => {
-    const { container } = render(<WireframeCanvas pageLayout={makePageLayout()} />)
+    const [pages, selectedPageId] = makePages()
+    const { container } = render(<WireframeCanvas pages={pages} selectedPageId={selectedPageId} />)
     expect(container.querySelector('svg')).toHaveAttribute('data-canvas-state', 'empty')
   })
 
   it('renders the correct number of visual cards', () => {
-    const { container } = render(<WireframeCanvas pageLayout={makePageLayout(4)} />)
+    const [pages, selectedPageId] = makePages(4)
+    const { container } = render(<WireframeCanvas pages={pages} selectedPageId={selectedPageId} />)
     expect(container.querySelectorAll('rect')).toHaveLength(4)
   })
 
   it('renders zero visuals when pageLayout has no visuals', () => {
-    const { container } = render(<WireframeCanvas pageLayout={makePageLayout(0)} />)
+    const [pages, selectedPageId] = makePages(0)
+    const { container } = render(<WireframeCanvas pages={pages} selectedPageId={selectedPageId} />)
     expect(container.querySelectorAll('rect')).toHaveLength(0)
   })
 
@@ -52,14 +61,16 @@ describe('WireframeCanvas', () => {
 
     it('renders all visual cards correctly when reduced motion is enabled', () => {
       vi.mocked(useReducedMotion).mockReturnValue(true)
-      const { container } = render(<WireframeCanvas pageLayout={makePageLayout(3)} />)
+      const [pages, selectedPageId] = makePages(3)
+      const { container } = render(<WireframeCanvas pages={pages} selectedPageId={selectedPageId} />)
       expect(container.querySelector('svg')).toBeInTheDocument()
       expect(container.querySelectorAll('rect')).toHaveLength(3)
     })
 
     it('canvas state is still driven by store when reduced motion is enabled — empty with no selection', () => {
       vi.mocked(useReducedMotion).mockReturnValue(true)
-      const { container } = render(<WireframeCanvas pageLayout={makePageLayout(2)} />)
+      const [pages, selectedPageId] = makePages(2)
+      const { container } = render(<WireframeCanvas pages={pages} selectedPageId={selectedPageId} />)
       expect(container.querySelector('svg')).toHaveAttribute('data-canvas-state', 'empty')
     })
 
@@ -71,9 +82,10 @@ describe('WireframeCanvas', () => {
         suppressDisplay: false, applyOnlyToTargetVisuals: false, filterState: null,
         rawPayload: { options: {}, explorationState: null },
       }
-      useAuditStore.setState({ auditReport: { bookmarks: [bk] } })
+      useAuditStore.setState({ auditReport: { bookmarks: [bk], pages: [], activePageId: '' } })
       useUiStore.setState({ selectedBookmarkId: 'bk-rm' })
-      const { container } = render(<WireframeCanvas pageLayout={makePageLayout(2)} />)
+      const [pages, selectedPageId] = makePages(2)
+      const { container } = render(<WireframeCanvas pages={pages} selectedPageId={selectedPageId} />)
       expect(container.querySelector('svg')).toHaveAttribute('data-canvas-state', 'bookmark-selected')
     })
   })
@@ -93,7 +105,7 @@ describe('WireframeCanvas', () => {
           },
         ],
       }
-      const { container } = render(<WireframeCanvas pageLayout={pageLayout} />)
+      const { container } = render(<WireframeCanvas pages={[pageLayout]} selectedPageId={pageLayout.pageId} />)
       expect(container.querySelectorAll('rect')).toHaveLength(1)
       expect(container.querySelector('rect')?.getAttribute('fill')).toBe('var(--color-visual-placeholder)')
       expect(container.querySelector('g')).toBeInTheDocument()
@@ -113,7 +125,7 @@ describe('WireframeCanvas', () => {
           },
         ],
       }
-      const { container } = render(<WireframeCanvas pageLayout={pageLayout} />)
+      const { container } = render(<WireframeCanvas pages={[pageLayout]} selectedPageId={pageLayout.pageId} />)
       const texts = container.querySelectorAll('text')
       const found = Array.from(texts).some(t => t.textContent === 'Unknown Visual')
       expect(found).toBe(true)
@@ -131,7 +143,7 @@ describe('WireframeCanvas', () => {
           { id: 'v3', visualType: 'map',                     position: { x: 220, y: 0, width: 100, height: 80 } },
         ],
       }
-      const { container } = render(<WireframeCanvas pageLayout={pageLayout} />)
+      const { container } = render(<WireframeCanvas pages={[pageLayout]} selectedPageId={pageLayout.pageId} />)
       // All 3 visuals must produce a rect — none silently omitted
       expect(container.querySelectorAll('rect')).toHaveLength(3)
     })
@@ -159,14 +171,15 @@ describe('WireframeCanvas', () => {
     }
 
     function makeAuditReport(bookmarks: Bookmark[]): AuditReport {
-      return { bookmarks }
+      return { bookmarks, pages: [], activePageId: '' }
     }
 
     it('has data-canvas-state="bookmark-selected" when a non-noOp bookmark is selected', () => {
       const bk = makeBookmark({ id: 'bk-1', suppressDisplay: false })
       useAuditStore.setState({ auditReport: makeAuditReport([bk]) })
       useUiStore.setState({ selectedBookmarkId: 'bk-1' })
-      const { container } = render(<WireframeCanvas pageLayout={makePageLayout(2)} />)
+      const [pages, selectedPageId] = makePages(2)
+      const { container } = render(<WireframeCanvas pages={pages} selectedPageId={selectedPageId} />)
       expect(container.querySelector('svg')).toHaveAttribute('data-canvas-state', 'bookmark-selected')
     })
 
@@ -174,7 +187,8 @@ describe('WireframeCanvas', () => {
       const bk = makeBookmark({ id: 'bk-1', suppressDisplay: true })
       useAuditStore.setState({ auditReport: makeAuditReport([bk]) })
       useUiStore.setState({ selectedBookmarkId: 'bk-1' })
-      const { container } = render(<WireframeCanvas pageLayout={makePageLayout(2)} />)
+      const [pages, selectedPageId] = makePages(2)
+      const { container } = render(<WireframeCanvas pages={pages} selectedPageId={selectedPageId} />)
       expect(container.querySelector('svg')).toHaveAttribute('data-canvas-state', 'bookmark-selected')
     })
 
@@ -192,7 +206,7 @@ describe('WireframeCanvas', () => {
       const bk = makeBookmark({ id: 'bk-1', affectedVisualIds: ['v-affected'], hiddenVisualIds: [] })
       useAuditStore.setState({ auditReport: makeAuditReport([bk]) })
       useUiStore.setState({ selectedBookmarkId: 'bk-1' })
-      const { container } = render(<WireframeCanvas pageLayout={pageLayout} />)
+      const { container } = render(<WireframeCanvas pages={[pageLayout]} selectedPageId={pageLayout.pageId} />)
       const rects = container.querySelectorAll('rect')
       expect(rects[0].getAttribute('stroke')).toBe('var(--color-ring)')
       expect(rects[1]).not.toHaveAttribute('stroke', 'var(--color-ring)')
@@ -211,7 +225,7 @@ describe('WireframeCanvas', () => {
       const bk = makeBookmark({ id: 'bk-1', hiddenVisualIds: ['v-hidden'], affectedVisualIds: [] })
       useAuditStore.setState({ auditReport: makeAuditReport([bk]) })
       useUiStore.setState({ selectedBookmarkId: 'bk-1' })
-      const { container } = render(<WireframeCanvas pageLayout={pageLayout} />)
+      const { container } = render(<WireframeCanvas pages={[pageLayout]} selectedPageId={pageLayout.pageId} />)
       const rect = container.querySelector('rect')
       expect(rect).not.toHaveAttribute('stroke', 'var(--color-ring)')
     })
@@ -229,7 +243,7 @@ describe('WireframeCanvas', () => {
       const bk = makeBookmark({ id: 'bk-1', hiddenVisualIds: ['v-overlap'], affectedVisualIds: ['v-overlap'] })
       useAuditStore.setState({ auditReport: makeAuditReport([bk]) })
       useUiStore.setState({ selectedBookmarkId: 'bk-1' })
-      const { container } = render(<WireframeCanvas pageLayout={pageLayout} />)
+      const { container } = render(<WireframeCanvas pages={[pageLayout]} selectedPageId={pageLayout.pageId} />)
       const rect = container.querySelector('rect')
       expect(rect).not.toHaveAttribute('stroke', 'var(--color-ring)')
     })
@@ -249,7 +263,7 @@ describe('WireframeCanvas', () => {
       const bkB = makeBookmark({ id: 'bk-b', affectedVisualIds: ['v-2'], hiddenVisualIds: [] })
       useAuditStore.setState({ auditReport: makeAuditReport([bkA, bkB]) })
       useUiStore.setState({ selectedBookmarkId: 'bk-a' })
-      const { container } = render(<WireframeCanvas pageLayout={pageLayout} />)
+      const { container } = render(<WireframeCanvas pages={[pageLayout]} selectedPageId={pageLayout.pageId} />)
       act(() => { useUiStore.setState({ selectedBookmarkId: 'bk-b' }) })
       const rects = container.querySelectorAll('rect')
       expect(rects[0]).not.toHaveAttribute('stroke', 'var(--color-ring)')
@@ -260,7 +274,8 @@ describe('WireframeCanvas', () => {
       const bk = makeBookmark({ id: 'bk-1', suppressDisplay: false })
       useAuditStore.setState({ auditReport: makeAuditReport([bk]) })
       useUiStore.setState({ selectedBookmarkId: 'bk-1' })
-      const { container } = render(<WireframeCanvas pageLayout={makePageLayout(2)} />)
+      const [pages, selectedPageId] = makePages(2)
+      const { container } = render(<WireframeCanvas pages={pages} selectedPageId={selectedPageId} />)
       expect(container.querySelector('svg')).toHaveAttribute('data-canvas-state', 'bookmark-selected')
       act(() => { useUiStore.setState({ selectedBookmarkId: null }) })
       expect(container.querySelector('svg')).toHaveAttribute('data-canvas-state', 'empty')
@@ -305,9 +320,9 @@ describe('WireframeCanvas', () => {
 
     it("Test A: 'data' type bookmark — amber glow stroke appears on affected visual rect", () => {
       const bk = makeBookmark({ type: 'data', suppressDisplay: true, affectedVisualIds: ['v-affected'] })
-      useAuditStore.setState({ auditReport: { bookmarks: [bk] } })
+      useAuditStore.setState({ auditReport: { bookmarks: [bk], pages: [], activePageId: '' } })
       useUiStore.setState({ selectedBookmarkId: 'bk-glow' })
-      const { container } = render(<WireframeCanvas pageLayout={glowPageLayout} />)
+      const { container } = render(<WireframeCanvas pages={[glowPageLayout]} selectedPageId={glowPageLayout.pageId} />)
       const rects = container.querySelectorAll('rect')
       const glowRect = Array.from(rects).find(r => r.getAttribute('stroke') === 'var(--color-data-glow)')
       expect(glowRect).toBeInTheDocument()
@@ -315,9 +330,9 @@ describe('WireframeCanvas', () => {
 
     it("Test B: 'data' type bookmark — no indigo ring on affected visual", () => {
       const bk = makeBookmark({ type: 'data', suppressDisplay: true, affectedVisualIds: ['v-affected'] })
-      useAuditStore.setState({ auditReport: { bookmarks: [bk] } })
+      useAuditStore.setState({ auditReport: { bookmarks: [bk], pages: [], activePageId: '' } })
       useUiStore.setState({ selectedBookmarkId: 'bk-glow' })
-      const { container } = render(<WireframeCanvas pageLayout={glowPageLayout} />)
+      const { container } = render(<WireframeCanvas pages={[glowPageLayout]} selectedPageId={glowPageLayout.pageId} />)
       const rects = Array.from(container.querySelectorAll('rect'))
       const ringRect = rects.find(r => r.getAttribute('stroke') === 'var(--color-ring)')
       expect(ringRect).toBeUndefined()
@@ -325,9 +340,9 @@ describe('WireframeCanvas', () => {
 
     it("Test C: 'display' type bookmark — no amber glow (unchanged behaviour)", () => {
       const bk = makeBookmark({ type: 'display', suppressDisplay: false, affectedVisualIds: ['v-affected'] })
-      useAuditStore.setState({ auditReport: { bookmarks: [bk] } })
+      useAuditStore.setState({ auditReport: { bookmarks: [bk], pages: [], activePageId: '' } })
       useUiStore.setState({ selectedBookmarkId: 'bk-glow' })
-      const { container } = render(<WireframeCanvas pageLayout={glowPageLayout} />)
+      const { container } = render(<WireframeCanvas pages={[glowPageLayout]} selectedPageId={glowPageLayout.pageId} />)
       const rects = Array.from(container.querySelectorAll('rect'))
       const glowRect = rects.find(r => r.getAttribute('stroke') === 'var(--color-data-glow)')
       expect(glowRect).toBeUndefined()
@@ -335,9 +350,9 @@ describe('WireframeCanvas', () => {
 
     it("Test D: 'mixed' type bookmark — both amber glow AND indigo ring present on affected visual", () => {
       const bk = makeBookmark({ type: 'mixed', suppressDisplay: false, affectedVisualIds: ['v-affected'], hiddenVisualIds: [] })
-      useAuditStore.setState({ auditReport: { bookmarks: [bk] } })
+      useAuditStore.setState({ auditReport: { bookmarks: [bk], pages: [], activePageId: '' } })
       useUiStore.setState({ selectedBookmarkId: 'bk-glow' })
-      const { container } = render(<WireframeCanvas pageLayout={glowPageLayout} />)
+      const { container } = render(<WireframeCanvas pages={[glowPageLayout]} selectedPageId={glowPageLayout.pageId} />)
       const rects = Array.from(container.querySelectorAll('rect'))
       const glowRect = rects.find(r => r.getAttribute('stroke') === 'var(--color-data-glow)')
       const ringRect = rects.find(r => r.getAttribute('stroke') === 'var(--color-ring)')
@@ -348,9 +363,9 @@ describe('WireframeCanvas', () => {
     it('Test E: reduced motion — amber glow is a static rect (no animation)', () => {
       vi.mocked(useReducedMotion).mockReturnValue(true)
       const bk = makeBookmark({ type: 'data', suppressDisplay: true, affectedVisualIds: ['v-affected'] })
-      useAuditStore.setState({ auditReport: { bookmarks: [bk] } })
+      useAuditStore.setState({ auditReport: { bookmarks: [bk], pages: [], activePageId: '' } })
       useUiStore.setState({ selectedBookmarkId: 'bk-glow' })
-      const { container } = render(<WireframeCanvas pageLayout={glowPageLayout} />)
+      const { container } = render(<WireframeCanvas pages={[glowPageLayout]} selectedPageId={glowPageLayout.pageId} />)
       const rects = Array.from(container.querySelectorAll('rect'))
       const glowRect = rects.find(r => r.getAttribute('stroke') === 'var(--color-data-glow)')
       expect(glowRect).toBeInTheDocument()
@@ -358,9 +373,9 @@ describe('WireframeCanvas', () => {
 
     it('Test F: hidden visual in a data bookmark does NOT get the glow', () => {
       const bk = makeBookmark({ type: 'data', suppressDisplay: true, affectedVisualIds: ['v-affected'], hiddenVisualIds: ['v-affected'] })
-      useAuditStore.setState({ auditReport: { bookmarks: [bk] } })
+      useAuditStore.setState({ auditReport: { bookmarks: [bk], pages: [], activePageId: '' } })
       useUiStore.setState({ selectedBookmarkId: 'bk-glow' })
-      const { container } = render(<WireframeCanvas pageLayout={glowPageLayout} />)
+      const { container } = render(<WireframeCanvas pages={[glowPageLayout]} selectedPageId={glowPageLayout.pageId} />)
       const rects = Array.from(container.querySelectorAll('rect'))
       const glowRect = rects.find(r => r.getAttribute('stroke') === 'var(--color-data-glow)')
       expect(glowRect).toBeUndefined()
@@ -368,23 +383,24 @@ describe('WireframeCanvas', () => {
   })
 
   it('uses canvas aspect ratio from pageLayout', () => {
-    const { container } = render(
-      <WireframeCanvas pageLayout={{ ...makePageLayout(), canvasWidth: 1920, canvasHeight: 1080 }} />
-    )
+    const page = { ...makePageLayout(), canvasWidth: 1920, canvasHeight: 1080 }
+    const { container } = render(<WireframeCanvas pages={[page]} selectedPageId={page.pageId} />)
     const surround = container.firstElementChild as HTMLElement
     const canvasContainer = surround.firstElementChild as HTMLElement
     expect(canvasContainer.style.aspectRatio).toBe('1920 / 1080')
   })
 
   it('canvas report box has dark background CSS variable', () => {
-    const { container } = render(<WireframeCanvas pageLayout={makePageLayout()} />)
+    const [pages, selectedPageId] = makePages()
+    const { container } = render(<WireframeCanvas pages={pages} selectedPageId={selectedPageId} />)
     const surround = container.firstElementChild as HTMLElement
     const canvasContainer = surround.firstElementChild as HTMLElement
     expect(canvasContainer.style.backgroundColor).toBe('var(--color-canvas-surround)')
   })
 
   it('canvas inner div is constrained by max-width and max-height to prevent overflow', () => {
-    const { container } = render(<WireframeCanvas pageLayout={makePageLayout()} />)
+    const [pages, selectedPageId] = makePages()
+    const { container } = render(<WireframeCanvas pages={pages} selectedPageId={selectedPageId} />)
     const surround = container.firstElementChild as HTMLElement
     const canvasContainer = surround.firstElementChild as HTMLElement
     expect(canvasContainer.style.maxWidth).toBe('100%')
@@ -393,7 +409,8 @@ describe('WireframeCanvas', () => {
 
   describe('visual type icons', () => {
     it('renders icon SVG elements (line/path/circle) inside each known-type visual card', () => {
-      const { container } = render(<WireframeCanvas pageLayout={makePageLayout(2)} />)
+      const [pages, selectedPageId] = makePages(2)
+      const { container } = render(<WireframeCanvas pages={pages} selectedPageId={selectedPageId} />)
       // clusteredColumnChart → ColIcon which renders <line> elements
       const lines = container.querySelectorAll('line')
       expect(lines.length).toBeGreaterThan(0)
@@ -411,7 +428,7 @@ describe('WireframeCanvas', () => {
           { id: 'v-unknown', visualType: 'someUnknownVisualType', position: { x: 0, y: 0, width: 200, height: 150 } },
         ],
       }
-      const { container } = render(<WireframeCanvas pageLayout={pageLayout} />)
+      const { container } = render(<WireframeCanvas pages={[pageLayout]} selectedPageId={pageLayout.pageId} />)
       // PLACEHOLDER_ICON uses path + circle, not rect
       expect(container.querySelector('path')).toBeInTheDocument()
       expect(container.querySelectorAll('rect')).toHaveLength(1)

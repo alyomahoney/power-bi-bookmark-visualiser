@@ -6,19 +6,22 @@ import { getCanvasDimensions, normalisePosition } from './wireframeLayout'
 import { VisualCard } from './VisualCard'
 
 interface WireframeCanvasProps {
-  pageLayout: PageLayout
+  pages: PageLayout[]
+  selectedPageId: string
 }
 
-export function WireframeCanvas({ pageLayout }: WireframeCanvasProps) {
+export function WireframeCanvas({ pages, selectedPageId }: WireframeCanvasProps) {
   const shouldReduceMotion = useReducedMotion()
   const [isAnimating, setIsAnimating] = useState(false)
-
   const selectedBookmarkId = useSelectedBookmark()
   const auditReport = useAuditReport()
 
   useEffect(() => {
     setIsAnimating(false)
   }, [selectedBookmarkId])
+
+  const pageLayout = pages.find(p => p.pageId === selectedPageId) ?? pages[0]
+  if (!pageLayout) return null
 
   const selectedBookmark =
     auditReport?.bookmarks.find((b) => b.id === selectedBookmarkId) ?? null

@@ -7,7 +7,7 @@ import { extractIfArchive } from './parsing/zipExtractor'
 import { detectSchemaVersion, SchemaDetectionError } from './parsing/schemaDetector'
 import { parseBookmarks } from './parsing/bookmarkParser'
 import { detectTogglePairs } from './parsing/togglePairDetector'
-import { parsePageLayout } from './parsing/wireframeLayoutParser'
+import { parsePages } from './parsing/wireframeLayoutParser'
 
 const send = (msg: WorkerOutboundMessage) => self.postMessage(msg)
 
@@ -40,12 +40,13 @@ export async function parseFilePipeline(entries: FileEntry[]): Promise<void> {
     const toggleGroups = detectTogglePairs(bookmarks)
 
     send({ type: 'PROGRESS', step: 'building' })
-    const pageLayout = await parsePageLayout(extractedEntries)
+    const { pages, activePageId } = await parsePages(extractedEntries)
     const report: AuditReport = {
       bookmarks,
       ...(toggleGroups.length > 0 && { toggleGroups }),
       ...(parseWarnings.length > 0 && { parseWarnings }),
-      ...(pageLayout && { pageLayout }),
+      pages,
+      activePageId,
     }
 
     send({ type: 'PROGRESS', step: 'complete' })

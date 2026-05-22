@@ -66,9 +66,10 @@
       "suppressDisplay": true,
       "applyOnlyToTargetVisuals": false,
       "filterState": null,
+      "targetPageId": "page-regional-breakdown",
       "rawPayload": {
         "options": { "suppressData": false, "suppressDisplay": true },
-        "explorationState": null
+        "explorationState": { "activeSection": "page-regional-breakdown" }
       }
     },
     {
@@ -150,21 +151,35 @@
       "bookmarkIds": ["bm-chart-view", "bm-table-view"]
     }
   ],
-  "pageLayout": {
-    "pageId": "page-sales-dashboard",
-    "pageDisplayName": "Sales Dashboard",
-    "canvasWidth": 1280,
-    "canvasHeight": 720,
-    "visuals": [
-      { "id": "revKpi",          "visualType": "cardVisual",        "position": { "x": 10,  "y": 10,  "width": 195, "height": 80,  "tabOrder": 0 } },
-      { "id": "marginKpi",       "visualType": "cardVisual",        "position": { "x": 215, "y": 10,  "width": 195, "height": 80,  "tabOrder": 1 } },
-      { "id": "growthKpi",       "visualType": "kpi",               "position": { "x": 420, "y": 10,  "width": 195, "height": 80,  "tabOrder": 2 } },
-      { "id": "regionSlicer",    "visualType": "slicer",            "position": { "x": 625, "y": 10,  "width": 645, "height": 80,  "tabOrder": 3 } },
-      { "id": "salesLineChart",  "visualType": "lineChart",         "position": { "x": 10,  "y": 110, "width": 820, "height": 280, "tabOrder": 4 } },
-      { "id": "categoryTreemap", "visualType": "treemap",           "position": { "x": 840, "y": 110, "width": 430, "height": 280, "tabOrder": 5 } },
-      { "id": "salesTable",      "visualType": "tableEx",           "position": { "x": 10,  "y": 410, "width": 490, "height": 300, "tabOrder": 6 } },
-      { "id": "productBarChart", "visualType": "clusteredBarChart", "position": { "x": 510, "y": 410, "width": 440, "height": 300, "tabOrder": 7 } },
-      { "id": "regionMap",       "visualType": "map",               "position": { "x": 960, "y": 410, "width": 310, "height": 300, "tabOrder": 8 } }
-    ]
-  }
+  "pages": [
+    {
+      "pageId": "page-sales-dashboard",
+      "pageDisplayName": "Sales Dashboard",
+      "canvasWidth": 1280,
+      "canvasHeight": 720,
+      "visuals": [
+        { "id": "revKpi",          "visualType": "cardVisual",        "position": { "x": 10,  "y": 10,  "width": 195, "height": 80,  "tabOrder": 0 } },
+        { "id": "marginKpi",       "visualType": "cardVisual",        "position": { "x": 215, "y": 10,  "width": 195, "height": 80,  "tabOrder": 1 } },
+        { "id": "growthKpi",       "visualType": "kpi",               "position": { "x": 420, "y": 10,  "width": 195, "height": 80,  "tabOrder": 2 } },
+        { "id": "regionSlicer",    "visualType": "slicer",            "position": { "x": 625, "y": 10,  "width": 645, "height": 80,  "tabOrder": 3 } },
+        { "id": "salesLineChart",  "visualType": "lineChart",         "position": { "x": 10,  "y": 110, "width": 820, "height": 280, "tabOrder": 4 } },
+        { "id": "categoryTreemap", "visualType": "treemap",           "position": { "x": 840, "y": 110, "width": 430, "height": 280, "tabOrder": 5 } },
+        { "id": "salesTable",      "visualType": "tableEx",           "position": { "x": 10,  "y": 410, "width": 490, "height": 300, "tabOrder": 6 } },
+        { "id": "productBarChart", "visualType": "clusteredBarChart", "position": { "x": 510, "y": 410, "width": 440, "height": 300, "tabOrder": 7 } },
+        { "id": "regionMap",       "visualType": "map",               "position": { "x": 960, "y": 410, "width": 310, "height": 300, "tabOrder": 8 } }
+      ]
+    },
+    {
+      "pageId": "page-regional-breakdown",
+      "pageDisplayName": "Regional Breakdown",
+      "canvasWidth": 1280,
+      "canvasHeight": 720,
+      "visuals": [
+        { "id": "regionDetailMap", "visualType": "map",     "position": { "x": 10,  "y": 10,  "width": 600, "height": 400, "tabOrder": 0 } },
+        { "id": "regionTable",     "visualType": "tableEx", "position": { "x": 620, "y": 10,  "width": 650, "height": 400, "tabOrder": 1 } },
+        { "id": "regionSlicer2",   "visualType": "slicer",  "position": { "x": 10,  "y": 430, "width": 400, "height": 80,  "tabOrder": 2 } }
+      ]
+    }
+  ],
+  "activePageId": "page-sales-dashboard"
 }

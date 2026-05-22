@@ -22,6 +22,7 @@ export interface Bookmark {
   suppressDisplay: boolean
   applyOnlyToTargetVisuals: boolean
   filterState: unknown
+  targetPageId?: string
   rawPayload: {
     options: BookmarkOptions
     explorationState: unknown
@@ -53,5 +54,6 @@ export interface AuditReport {
   filename?: string
   parseWarnings?: ParseWarning[]
   toggleGroups?: ToggleGroup[]
-  pageLayout?: PageLayout
+  pages: PageLayout[]
+  activePageId: string
 }

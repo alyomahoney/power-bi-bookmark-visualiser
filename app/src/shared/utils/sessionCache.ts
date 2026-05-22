@@ -15,7 +15,12 @@ export const sessionCache = {
     try {
       const raw = sessionStorage.getItem(CACHE_KEY)
       if (raw === null) return null
-      return JSON.parse(raw) as AuditReport
+      const parsed = JSON.parse(raw) as AuditReport
+      if (!('pages' in parsed)) {
+        sessionStorage.removeItem(CACHE_KEY)
+        return null
+      }
+      return parsed
     } catch {
       return null
     }

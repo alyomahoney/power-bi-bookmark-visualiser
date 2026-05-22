@@ -1,10 +1,13 @@
 import { render, screen, fireEvent } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { useAuditStore } from '@/store/auditStore'
 import { useDemoStore } from '@/store/demoStore'
 import { useFilterStore } from '@/store/filterStore'
 import { useUiStore } from '@/store/uiStore'
 import sampleData from '@/features/demo/sampleReports/sample.json'
 import type { AuditReport } from '@/types/audit'
+import { buildBookmark } from '@/__fixtures__/builders/bookmarkBuilder'
+import { makeReport } from '@/__fixtures__/builders/reportBuilder'
 import DemoPage from './DemoPage'
 
 const mockNavigate = vi.fn()
@@ -36,8 +39,8 @@ vi.mock('@/features/audit/BookmarkVisualFilter', () => ({
 }))
 
 vi.mock('@/features/audit/BookmarkListItem', () => ({
-  BookmarkListItem: ({ bookmark }: { bookmark: { id: string; name: string } }) => (
-    <div data-testid={`bookmark-${bookmark.id}`}>{bookmark.name}</div>
+  BookmarkListItem: ({ bookmark, onClick }: { bookmark: { id: string; name: string }; onClick?: () => void }) => (
+    <div data-testid={`bookmark-${bookmark.id}`} onClick={onClick}>{bookmark.name}</div>
   ),
 }))
 
@@ -48,7 +51,7 @@ vi.mock('@/features/audit/BookmarkDetail', () => ({
 describe('DemoPage', () => {
   beforeEach(() => {
     mockNavigate.mockReset()
-    useAuditStore.setState({ auditReport: sampleData as AuditReport })
+    useAuditStore.setState({ auditReport: sampleData as AuditReport, selectedPageId: null })
     useDemoStore.setState({ isDemoMode: false, loadDemoReport: vi.fn(), exitDemoMode: vi.fn() })
     useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIds: [] })
   })
@@ -227,5 +230,70 @@ describe('DemoPage — reset to default button', () => {
     render(<DemoPage />)
     fireEvent.click(screen.getByRole('button', { name: /reset to default/i }))
     expect(useUiStore.getState().selectedBookmarkId).toBeNull()
+  })
+})
+
+describe('DemoPage — bookmark auto-navigation', () => {
+  beforeEach(() => {
+    mockNavigate.mockReset()
+    useDemoStore.setState({ isDemoMode: false, loadDemoReport: vi.fn(), exitDemoMode: vi.fn() })
+    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIds: [] })
+    useUiStore.setState({ selectedBookmarkId: null })
+    useAuditStore.setState({ auditReport: null, selectedPageId: null })
+  })
+
+  afterEach(() => {
+    useAuditStore.setState({ auditReport: null })
+    useUiStore.setState({ selectedBookmarkId: null })
+  })
+
+  it('clicking a bookmark with targetPageId updates selectedPageId', async () => {
+    const bk = buildBookmark().withId('bk-nav').withName('Nav BM').withTargetPageId('page-2').build()
+    const report = makeReport({
+      bookmarks: [bk],
+      pages: [
+        { pageId: 'page-1', pageDisplayName: 'Overview', canvasWidth: 1280, canvasHeight: 720, visuals: [] },
+        { pageId: 'page-2', pageDisplayName: 'Detail', canvasWidth: 1280, canvasHeight: 720, visuals: [] },
+      ],
+      activePageId: 'page-1',
+    })
+    useAuditStore.setState({ auditReport: report, selectedPageId: 'page-1' })
+    render(<DemoPage />)
+    await userEvent.click(screen.getByTestId('bookmark-bk-nav'))
+    expect(useAuditStore.getState().selectedPageId).toBe('page-2')
+  })
+
+  it('clicking a bookmark without targetPageId does not change selectedPageId', async () => {
+    const bk = buildBookmark().withId('bk-no-nav').withName('No Nav').build()
+    const report = makeReport({
+      bookmarks: [bk],
+      pages: [
+        { pageId: 'page-1', pageDisplayName: 'Overview', canvasWidth: 1280, canvasHeight: 720, visuals: [] },
+      ],
+      activePageId: 'page-1',
+    })
+    useAuditStore.setState({ auditReport: report, selectedPageId: 'page-1' })
+    render(<DemoPage />)
+    await userEvent.click(screen.getByTestId('bookmark-bk-no-nav'))
+    expect(useAuditStore.getState().selectedPageId).toBe('page-1')
+  })
+
+  it('clicking Reset to Default resets selectedPageId to activePageId', async () => {
+    const bk = buildBookmark().withId('bk-1').build()
+    const report = makeReport({
+      bookmarks: [bk],
+      pages: [
+        { pageId: 'page-1', pageDisplayName: 'Overview', canvasWidth: 1280, canvasHeight: 720, visuals: [
+          { id: 'v-1', visualType: 'tableEx', position: { x: 0, y: 0, width: 100, height: 100 } },
+        ]},
+        { pageId: 'page-2', pageDisplayName: 'Detail', canvasWidth: 1280, canvasHeight: 720, visuals: [] },
+      ],
+      activePageId: 'page-1',
+    })
+    useAuditStore.setState({ auditReport: report, selectedPageId: 'page-2' })
+    useUiStore.setState({ selectedBookmarkId: 'bk-1' })
+    render(<DemoPage />)
+    await userEvent.click(screen.getByRole('button', { name: /reset to default/i }))
+    expect(useAuditStore.getState().selectedPageId).toBe('page-1')
   })
 })

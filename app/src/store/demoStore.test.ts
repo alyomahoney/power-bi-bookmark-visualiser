@@ -4,7 +4,7 @@ import { useAuditStore } from './auditStore'
 describe('demoStore', () => {
   beforeEach(() => {
     useDemoStore.setState({ isDemoMode: false })
-    useAuditStore.setState({ auditReport: null })
+    useAuditStore.setState({ auditReport: null, selectedPageId: null })
   })
 
   it('has isDemoMode false as initial state', () => {
@@ -31,9 +31,9 @@ describe('demoStore', () => {
     expect(useAuditStore.getState().auditReport?.toggleGroups).toHaveLength(1)
   })
 
-  it('loadDemoReport loads 9 visuals in pageLayout', () => {
+  it('loadDemoReport loads 9 visuals in the first page', () => {
     useDemoStore.getState().loadDemoReport()
-    expect(useAuditStore.getState().auditReport?.pageLayout?.visuals).toHaveLength(9)
+    expect(useAuditStore.getState().auditReport?.pages[0]?.visuals).toHaveLength(9)
   })
 
   it('loadDemoReport sets filename to "Sales Dashboard Demo"', () => {

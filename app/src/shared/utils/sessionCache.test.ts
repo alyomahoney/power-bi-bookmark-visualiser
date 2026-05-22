@@ -18,7 +18,7 @@ afterEach(() => {
 
 describe('sessionCache.write', () => {
   it('serialises and stores the report', () => {
-    const report: AuditReport = { bookmarks: [] }
+    const report: AuditReport = { bookmarks: [], pages: [], activePageId: '' }
     sessionCache.write(report)
     expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
       'pbi-bookmark-audit',
@@ -30,7 +30,7 @@ describe('sessionCache.write', () => {
     mockSessionStorage.setItem.mockImplementation(() => {
       throw new Error('QuotaExceededError')
     })
-    expect(() => sessionCache.write({ bookmarks: [] })).not.toThrow()
+    expect(() => sessionCache.write({ bookmarks: [], pages: [], activePageId: '' })).not.toThrow()
   })
 })
 
@@ -41,7 +41,7 @@ describe('sessionCache.read', () => {
   })
 
   it('deserialises and returns stored report', () => {
-    const report: AuditReport = { bookmarks: [] }
+    const report: AuditReport = { bookmarks: [], pages: [], activePageId: '' }
     mockSessionStorage.getItem.mockReturnValue(JSON.stringify(report))
     expect(sessionCache.read()).toEqual(report)
   })
@@ -49,6 +49,12 @@ describe('sessionCache.read', () => {
   it('returns null when stored value is invalid JSON', () => {
     mockSessionStorage.getItem.mockReturnValue('{invalid json}')
     expect(sessionCache.read()).toBeNull()
+  })
+
+  it('returns null and clears cache when stored report is missing the pages field', () => {
+    mockSessionStorage.getItem.mockReturnValue(JSON.stringify({ bookmarks: [] }))
+    expect(sessionCache.read()).toBeNull()
+    expect(mockSessionStorage.removeItem).toHaveBeenCalledWith('pbi-bookmark-audit')
   })
 })
 

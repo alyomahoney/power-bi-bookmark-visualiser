@@ -130,6 +130,12 @@ export async function parseBookmarks(
 
       const options: BookmarkOptions = parsed.options ?? {}
 
+      const explorationActiveSection = (parsed.explorationState as Record<string, unknown> | null)?.['activeSection']
+      const targetPageId =
+        options.suppressActiveSection === true || typeof explorationActiveSection !== 'string' || !explorationActiveSection
+          ? undefined
+          : explorationActiveSection
+
       let affectedVisualIds: string[]
       if (options.applyOnlyToTargetVisuals === true) {
         if (options.targetVisualNames === undefined) {
@@ -160,6 +166,7 @@ export async function parseBookmarks(
         suppressDisplay: options.suppressDisplay === true,
         applyOnlyToTargetVisuals: options.applyOnlyToTargetVisuals === true,
         filterState: parsed.explorationState ?? null,
+        targetPageId,
         rawPayload,
       })
     } catch {

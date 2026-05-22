@@ -21,6 +21,22 @@ export function useClearAudit() {
   return useAuditStore((state) => state.clearAudit)
 }
 
+export function useSelectedPageId() {
+  return useAuditStore((state) => state.selectedPageId)
+}
+
+export function useSetSelectedPageId() {
+  return useAuditStore((state) => state.setSelectedPageId)
+}
+
+export function useActivePageLayout() {
+  return useAuditStore((state) => {
+    if (!state.auditReport) return undefined
+    const id = state.selectedPageId ?? state.auditReport.activePageId
+    return state.auditReport.pages.find(p => p.pageId === id) ?? state.auditReport.pages[0]
+  })
+}
+
 export function useParseError() {
   return useUiStore((state) => state.parseError)
 }
@@ -91,4 +107,23 @@ export function useLoadDemoReport() {
 
 export function useExitDemoMode() {
   return useDemoStore((state) => state.exitDemoMode)
+}
+
+export function useEffectivePageId(): string {
+  return useAuditStore((state) => state.selectedPageId ?? state.auditReport?.activePageId ?? '')
+}
+
+export function useSelectBookmarkWithNavigation() {
+  const auditReport = useAuditReport()
+  const selectBookmark = useSelectBookmark()
+  const setSelectedPageId = useSetSelectedPageId()
+  return (id: string | null) => {
+    if (id !== null) {
+      const bookmark = auditReport?.bookmarks.find(b => b.id === id)
+      if (bookmark?.targetPageId) {
+        setSelectedPageId(bookmark.targetPageId)
+      }
+    }
+    selectBookmark(id)
+  }
 }

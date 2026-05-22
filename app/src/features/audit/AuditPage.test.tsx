@@ -6,7 +6,8 @@ import { useUiStore } from '@/store/uiStore'
 import { useFilterStore } from '@/store/filterStore'
 import { sessionCache } from '@/shared/utils/sessionCache'
 import { buildBookmark } from '@/__fixtures__/builders/bookmarkBuilder'
-import type { AuditReport, PageLayout } from '@/types/audit'
+import { makeReport } from '@/__fixtures__/builders/reportBuilder'
+import type { PageLayout } from '@/types/audit'
 
 const mockNavigate = vi.fn()
 vi.mock('react-router', () => ({
@@ -20,10 +21,6 @@ vi.mock('@/shared/utils/sessionCache', () => ({
     clear: vi.fn(),
   },
 }))
-
-function makeReport(partial: Partial<AuditReport> = {}): AuditReport {
-  return { bookmarks: [], ...partial }
-}
 
 function makePageLayout(visualIds: string[]): PageLayout {
   return {
@@ -41,7 +38,7 @@ function makePageLayout(visualIds: string[]): PageLayout {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  useAuditStore.setState({ auditReport: null })
+  useAuditStore.setState({ auditReport: null, selectedPageId: null })
   useUiStore.setState({ selectedBookmarkId: null })
   useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIds: [] })
 })
@@ -54,11 +51,23 @@ describe('AuditPage — session hydration', () => {
   })
 
   it('populates auditStore and renders when auditReport is null and sessionCache has a report', async () => {
-    const report = makeReport({ bookmarks: [buildBookmark().withName('Sales View').build()] })
+    const report = makeReport({
+      bookmarks: [buildBookmark().withName('Sales View').build()],
+      pages: [makePageLayout(['v-1'])],
+      activePageId: 'page-1',
+    })
     vi.mocked(sessionCache.read).mockReturnValue(report)
     await act(async () => { render(<AuditPage />) })
     expect(useAuditStore.getState().auditReport).toEqual(report)
     expect(screen.getByText('Sales View')).toBeInTheDocument()
+  })
+
+  it('does NOT reject a cached report that has pages: [] (valid new-schema report with no layout)', async () => {
+    const report = makeReport({ bookmarks: [] })
+    vi.mocked(sessionCache.read).mockReturnValue(report)
+    await act(async () => { render(<AuditPage />) })
+    expect(sessionCache.clear).not.toHaveBeenCalled()
+    expect(useAuditStore.getState().auditReport).toEqual(report)
   })
 
   it('does NOT call sessionCache.read() when auditReport is already in store', () => {
@@ -438,26 +447,26 @@ describe('AuditPage — wireframe canvas', () => {
     }
   }
 
-  it('renders WireframeCanvas visual elements when auditReport.pageLayout is set', () => {
-    useAuditStore.setState({ auditReport: makeReport({ pageLayout: makeWireframeLayout() }) })
+  it('renders WireframeCanvas visual elements when auditReport has pages', () => {
+    useAuditStore.setState({ auditReport: makeReport({ pages: [makeWireframeLayout()], activePageId: 'pg-1' }) })
     const { container } = render(<AuditPage />)
     expect(container.querySelector('rect')).toBeInTheDocument()
   })
 
-  it('does not render WireframeCanvas when auditReport.pageLayout is absent', () => {
+  it('does not render WireframeCanvas when auditReport.pages is empty', () => {
     useAuditStore.setState({ auditReport: makeReport() })
     const { container } = render(<AuditPage />)
     expect(container.querySelector('rect')).not.toBeInTheDocument()
   })
 
-  it('shows BookmarkDetail below canvas when pageLayout is set and a bookmark is selected', () => {
+  it('shows BookmarkDetail below canvas when pages is set and a bookmark is selected', () => {
     const bookmark = buildBookmark()
       .withId('bk-detail')
       .withType('display')
       .withAffectedVisualIds(['v-001'])
       .build()
     useAuditStore.setState({
-      auditReport: makeReport({ bookmarks: [bookmark], pageLayout: makeWireframeLayout() }),
+      auditReport: makeReport({ bookmarks: [bookmark], pages: [makeWireframeLayout()], activePageId: 'pg-1' }),
     })
     useUiStore.setState({ selectedBookmarkId: 'bk-detail' })
     const { container: c } = render(<AuditPage />)
@@ -619,18 +628,19 @@ describe('AuditPage — visual filter', () => {
     useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIds: [] })
   })
 
-  it('renders the Visual filter trigger when pageLayout has visuals', () => {
+  it('renders the Visual filter trigger when pages has visuals', () => {
     useAuditStore.setState({
       auditReport: makeReport({
         bookmarks: [buildBookmark().build()],
-        pageLayout: makePageLayout(['vis-1']),
+        pages: [makePageLayout(['vis-1'])],
+        activePageId: 'page-1',
       }),
     })
     render(<AuditPage />)
     expect(screen.getByRole('button', { name: /^visual$/i })).toBeInTheDocument()
   })
 
-  it('does NOT render the Visual filter trigger when pageLayout is absent', () => {
+  it('does NOT render the Visual filter trigger when pages is empty', () => {
     useAuditStore.setState({
       auditReport: makeReport({ bookmarks: [buildBookmark().build()] }),
     })
@@ -642,7 +652,8 @@ describe('AuditPage — visual filter', () => {
     useAuditStore.setState({
       auditReport: makeReport({
         bookmarks: [buildBookmark().build()],
-        pageLayout: makePageLayout([]),
+        pages: [makePageLayout([])],
+        activePageId: 'page-1',
       }),
     })
     render(<AuditPage />)
@@ -655,7 +666,8 @@ describe('AuditPage — visual filter', () => {
     useAuditStore.setState({
       auditReport: makeReport({
         bookmarks: [b1, b2],
-        pageLayout: makePageLayout(['vis-1', 'vis-2']),
+        pages: [makePageLayout(['vis-1', 'vis-2'])],
+        activePageId: 'page-1',
       }),
     })
     useFilterStore.setState({ selectedVisualIds: ['vis-1'] })
@@ -671,7 +683,8 @@ describe('AuditPage — visual filter', () => {
     useAuditStore.setState({
       auditReport: makeReport({
         bookmarks: [b1, b2, b3],
-        pageLayout: makePageLayout(['vis-1', 'vis-2', 'vis-3']),
+        pages: [makePageLayout(['vis-1', 'vis-2', 'vis-3'])],
+        activePageId: 'page-1',
       }),
     })
     useFilterStore.setState({ selectedVisualIds: ['vis-1', 'vis-2'] })
@@ -687,7 +700,8 @@ describe('AuditPage — visual filter', () => {
     useAuditStore.setState({
       auditReport: makeReport({
         bookmarks: [b1, b2],
-        pageLayout: makePageLayout(['vis-1']),
+        pages: [makePageLayout(['vis-1'])],
+        activePageId: 'page-1',
       }),
     })
     useFilterStore.setState({ selectedTypes: ['display'], selectedVisualIds: ['vis-1'] })
@@ -700,7 +714,8 @@ describe('AuditPage — visual filter', () => {
     useAuditStore.setState({
       auditReport: makeReport({
         bookmarks: [buildBookmark().withAffectedVisualIds(['vis-1']).build()],
-        pageLayout: makePageLayout(['vis-1']),
+        pages: [makePageLayout(['vis-1'])],
+        activePageId: 'page-1',
       }),
     })
     useFilterStore.setState({ selectedVisualIds: ['vis-1'] })
@@ -712,7 +727,8 @@ describe('AuditPage — visual filter', () => {
     useAuditStore.setState({
       auditReport: makeReport({
         bookmarks: [buildBookmark().withName('BM').withAffectedVisualIds(['vis-1']).build()],
-        pageLayout: makePageLayout(['vis-1', 'vis-2']),
+        pages: [makePageLayout(['vis-1', 'vis-2'])],
+        activePageId: 'page-1',
       }),
     })
     useFilterStore.setState({ selectedVisualIds: ['vis-2'] })
@@ -726,7 +742,8 @@ describe('AuditPage — visual filter', () => {
     useAuditStore.setState({
       auditReport: makeReport({
         bookmarks: [b1, b2],
-        pageLayout: makePageLayout(['vis-1']),
+        pages: [makePageLayout(['vis-1'])],
+        activePageId: 'page-1',
       }),
     })
     useFilterStore.setState({ searchQuery: 'sales', selectedVisualIds: ['vis-1'] })
@@ -845,6 +862,58 @@ describe('AuditPage — bookmark grouping sections', () => {
   })
 })
 
+describe('AuditPage — bookmark auto-navigation', () => {
+  it('clicking a bookmark with targetPageId updates selectedPageId', async () => {
+    const bk = buildBookmark().withId('bk-nav').withName('Nav BM').withTargetPageId('page-2').build()
+    const report = makeReport({
+      bookmarks: [bk],
+      pages: [
+        { pageId: 'page-1', pageDisplayName: 'Overview', canvasWidth: 1280, canvasHeight: 720, visuals: [] },
+        { pageId: 'page-2', pageDisplayName: 'Detail', canvasWidth: 1280, canvasHeight: 720, visuals: [] },
+      ],
+      activePageId: 'page-1',
+    })
+    useAuditStore.setState({ auditReport: report, selectedPageId: 'page-1' })
+    render(<AuditPage />)
+    await userEvent.click(screen.getByRole('option', { name: /Nav BM/i }))
+    expect(useAuditStore.getState().selectedPageId).toBe('page-2')
+  })
+
+  it('clicking a bookmark without targetPageId does not change selectedPageId', async () => {
+    const bk = buildBookmark().withId('bk-no-nav').withName('No Nav').build()
+    const report = makeReport({
+      bookmarks: [bk],
+      pages: [
+        { pageId: 'page-1', pageDisplayName: 'Overview', canvasWidth: 1280, canvasHeight: 720, visuals: [] },
+      ],
+      activePageId: 'page-1',
+    })
+    useAuditStore.setState({ auditReport: report, selectedPageId: 'page-1' })
+    render(<AuditPage />)
+    await userEvent.click(screen.getByRole('option', { name: /No Nav/i }))
+    expect(useAuditStore.getState().selectedPageId).toBe('page-1')
+  })
+
+  it('clicking Reset to Default resets selectedPageId to activePageId', async () => {
+    const bk = buildBookmark().withId('bk-1').build()
+    const report = makeReport({
+      bookmarks: [bk],
+      pages: [
+        { pageId: 'page-1', pageDisplayName: 'Overview', canvasWidth: 1280, canvasHeight: 720, visuals: [
+          { id: 'v-1', visualType: 'tableEx', position: { x: 0, y: 0, width: 100, height: 100 } },
+        ]},
+        { pageId: 'page-2', pageDisplayName: 'Detail', canvasWidth: 1280, canvasHeight: 720, visuals: [] },
+      ],
+      activePageId: 'page-1',
+    })
+    useAuditStore.setState({ auditReport: report, selectedPageId: 'page-2' })
+    useUiStore.setState({ selectedBookmarkId: 'bk-1' })
+    render(<AuditPage />)
+    await userEvent.click(screen.getByRole('button', { name: /reset to default/i }))
+    expect(useAuditStore.getState().selectedPageId).toBe('page-1')
+  })
+})
+
 describe('AuditPage — reset to default button', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -853,20 +922,20 @@ describe('AuditPage — reset to default button', () => {
     useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIds: [] })
   })
 
-  it('renders "Reset to Default" button when pageLayout is present', () => {
-    useAuditStore.setState({ auditReport: makeReport({ pageLayout: makePageLayout(['v-1']) }) })
+  it('renders "Reset to Default" button when pages has visuals', () => {
+    useAuditStore.setState({ auditReport: makeReport({ pages: [makePageLayout(['v-1'])], activePageId: 'page-1' }) })
     render(<AuditPage />)
     expect(screen.getByRole('button', { name: /reset to default/i })).toBeInTheDocument()
   })
 
-  it('does NOT render "Reset to Default" button when pageLayout is absent', () => {
+  it('does NOT render "Reset to Default" button when pages is empty', () => {
     useAuditStore.setState({ auditReport: makeReport() })
     render(<AuditPage />)
     expect(screen.queryByRole('button', { name: /reset to default/i })).not.toBeInTheDocument()
   })
 
   it('button is disabled when no bookmark is selected', () => {
-    useAuditStore.setState({ auditReport: makeReport({ pageLayout: makePageLayout(['v-1']) }) })
+    useAuditStore.setState({ auditReport: makeReport({ pages: [makePageLayout(['v-1'])], activePageId: 'page-1' }) })
     useUiStore.setState({ selectedBookmarkId: null })
     render(<AuditPage />)
     expect(screen.getByRole('button', { name: /reset to default/i })).toBeDisabled()
@@ -874,7 +943,7 @@ describe('AuditPage — reset to default button', () => {
 
   it('button is enabled when a bookmark is selected', () => {
     const bk = buildBookmark().withId('bk-1').build()
-    useAuditStore.setState({ auditReport: makeReport({ bookmarks: [bk], pageLayout: makePageLayout(['v-1']) }) })
+    useAuditStore.setState({ auditReport: makeReport({ bookmarks: [bk], pages: [makePageLayout(['v-1'])], activePageId: 'page-1' }) })
     useUiStore.setState({ selectedBookmarkId: 'bk-1' })
     render(<AuditPage />)
     expect(screen.getByRole('button', { name: /reset to default/i })).not.toBeDisabled()
@@ -882,7 +951,7 @@ describe('AuditPage — reset to default button', () => {
 
   it('clicking Reset to Default clears selectedBookmarkId', async () => {
     const bk = buildBookmark().withId('bk-1').build()
-    useAuditStore.setState({ auditReport: makeReport({ bookmarks: [bk], pageLayout: makePageLayout(['v-1']) }) })
+    useAuditStore.setState({ auditReport: makeReport({ bookmarks: [bk], pages: [makePageLayout(['v-1'])], activePageId: 'page-1' }) })
     useUiStore.setState({ selectedBookmarkId: 'bk-1' })
     render(<AuditPage />)
     await userEvent.click(screen.getByRole('button', { name: /reset to default/i }))

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Search } from 'lucide-react'
-import { useAuditReport, useSetAuditReport, useClearAudit, useSelectedBookmark, useSelectBookmark, useSearchQuery, useSetSearchQuery, useClearFilters, useSelectedTypes, useToggleType, useSelectedVisualIds, useToggleVisual, useExitDemoMode } from '@/store/hooks'
+import { useAuditReport, useSetAuditReport, useClearAudit, useSelectedBookmark, useSelectBookmark, useSearchQuery, useSetSearchQuery, useClearFilters, useSelectedTypes, useToggleType, useSelectedVisualIds, useToggleVisual, useExitDemoMode, useSetSelectedPageId, useActivePageLayout, useEffectivePageId, useSelectBookmarkWithNavigation } from '@/store/hooks'
 import { sessionCache } from '@/shared/utils/sessionCache'
 import { ThemeToggle } from '@/shared/components/ThemeToggle'
 import { AppLogo } from '@/shared/components/AppLogo'
@@ -11,6 +11,7 @@ import { GroupedBookmarkList } from './GroupedBookmarkList'
 import { BookmarkTypeFilter } from './BookmarkTypeFilter'
 import { BookmarkVisualFilter } from './BookmarkVisualFilter'
 import { WireframeCanvas } from '@/features/wireframe/WireframeCanvas'
+import { PageTabStrip } from '@/features/wireframe/PageTabStrip'
 
 export default function AuditPage() {
   const auditReport = useAuditReport()
@@ -30,6 +31,8 @@ export default function AuditPage() {
   const selectedVisualIds = useSelectedVisualIds()
   const toggleVisual = useToggleVisual()
   const exitDemoMode = useExitDemoMode()
+  const effectivePageId = useEffectivePageId()
+  const setSelectedPageId = useSetSelectedPageId()
 
   useEffect(() => {
     const meta = document.createElement('meta')
@@ -52,7 +55,7 @@ export default function AuditPage() {
         navigate('/', { replace: true })
       }
     }
-  }, []) // intentionally empty — run once on mount only
+  }, [])
 
   useEffect(() => {
     setRovingIndex(0)
@@ -100,6 +103,9 @@ export default function AuditPage() {
     return result
   }, [auditReport?.bookmarks, searchQuery, selectedTypes, selectedVisualIds])
 
+  const activePageLayout = useActivePageLayout()
+  const handleSelectBookmark = useSelectBookmarkWithNavigation()
+
   if (!auditReport) return null
 
   const allVisualsBookmarks = filteredBookmarks.filter(b => !b.applyOnlyToTargetVisuals)
@@ -107,8 +113,7 @@ export default function AuditPage() {
   const renderedBookmarks = [...allVisualsBookmarks, ...selectedVisualsBookmarks]
 
   const selectedBookmark = auditReport.bookmarks.find(b => b.id === selectedBookmarkId) ?? null
-  const pageLayout = auditReport.pageLayout
-  const visuals = pageLayout?.visuals ?? []
+  const visuals = activePageLayout?.visuals ?? []
 
   const handleUploadNew = () => {
     exitDemoMode()
@@ -141,7 +146,7 @@ export default function AuditPage() {
       const current = rovingIndexRef.current
       if (current < 0 || current >= renderedBookmarks.length) return
       const focusedId = renderedBookmarks[current].id
-      selectBookmark(selectedBookmarkId === focusedId ? null : focusedId)
+      handleSelectBookmark(selectedBookmarkId === focusedId ? null : focusedId)
     }
   }
 
@@ -248,7 +253,7 @@ export default function AuditPage() {
                 itemRefs={itemRefs}
                 rovingIndexRef={rovingIndexRef}
                 setRovingIndex={setRovingIndex}
-                selectBookmark={selectBookmark}
+                selectBookmark={handleSelectBookmark}
               />
             )}
           </div>
@@ -257,12 +262,20 @@ export default function AuditPage() {
           aria-label="Report wireframe"
           className="flex-1 overflow-hidden flex flex-col"
         >
-          {pageLayout ? (
+          <PageTabStrip
+            pages={auditReport.pages}
+            selectedPageId={effectivePageId}
+            onSelect={setSelectedPageId}
+          />
+          {activePageLayout ? (
             <>
               <div className="px-4 py-2 border-b border-border-subtle shrink-0 flex items-center justify-end">
                 <button
                   type="button"
-                  onClick={() => selectBookmark(null)}
+                  onClick={() => {
+                    selectBookmark(null)
+                    setSelectedPageId(auditReport.activePageId)
+                  }}
                   disabled={!selectedBookmarkId}
                   className="text-xs font-medium text-text-secondary hover:text-text-primary border border-border-subtle rounded px-2 py-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
@@ -270,7 +283,10 @@ export default function AuditPage() {
                 </button>
               </div>
               <div className="flex-1 overflow-hidden relative">
-                <WireframeCanvas pageLayout={pageLayout} />
+                <WireframeCanvas
+                  pages={auditReport.pages}
+                  selectedPageId={effectivePageId}
+                />
               </div>
               {selectedBookmark && (
                 <div className="h-64 shrink-0 border-t border-border-subtle overflow-y-auto">

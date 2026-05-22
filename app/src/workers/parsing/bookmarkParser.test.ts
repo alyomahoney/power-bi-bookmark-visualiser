@@ -329,6 +329,68 @@ describe('parseBookmarks', () => {
     })
   })
 
+  describe('targetPageId', () => {
+    it('populates targetPageId when explorationState.activeSection is set and suppressActiveSection is absent', async () => {
+      const payload = {
+        name: BK_ID,
+        displayName: 'Page Nav Bookmark',
+        options: {},
+        explorationState: { activeSection: 'page-regional-breakdown', sections: {} },
+      }
+      const entries = [
+        makeBookmarksJsonEntry([{ name: BK_ID }]),
+        makeBookmarkEntry(BK_ID, payload),
+      ]
+      const { bookmarks } = await parseBookmarks(entries)
+      expect(bookmarks[0].targetPageId).toBe('page-regional-breakdown')
+    })
+
+    it('sets targetPageId to undefined when suppressActiveSection is true', async () => {
+      const payload = {
+        name: BK_ID,
+        displayName: 'Suppressed Nav',
+        options: { suppressActiveSection: true },
+        explorationState: { activeSection: 'page-regional-breakdown', sections: {} },
+      }
+      const entries = [
+        makeBookmarksJsonEntry([{ name: BK_ID }]),
+        makeBookmarkEntry(BK_ID, payload),
+      ]
+      const { bookmarks } = await parseBookmarks(entries)
+      expect(bookmarks[0].targetPageId).toBeUndefined()
+    })
+
+    it('sets targetPageId to undefined when explorationState is null', async () => {
+      const payload = {
+        name: BK_ID,
+        displayName: 'No Exploration',
+        options: {},
+        explorationState: null,
+      }
+      const entries = [
+        makeBookmarksJsonEntry([{ name: BK_ID }]),
+        makeBookmarkEntry(BK_ID, payload),
+      ]
+      const { bookmarks } = await parseBookmarks(entries)
+      expect(bookmarks[0].targetPageId).toBeUndefined()
+    })
+
+    it('sets targetPageId to undefined when explorationState.activeSection is an empty string', async () => {
+      const payload = {
+        name: BK_ID,
+        displayName: 'Empty Section',
+        options: {},
+        explorationState: { activeSection: '', sections: {} },
+      }
+      const entries = [
+        makeBookmarksJsonEntry([{ name: BK_ID }]),
+        makeBookmarkEntry(BK_ID, payload),
+      ]
+      const { bookmarks } = await parseBookmarks(entries)
+      expect(bookmarks[0].targetPageId).toBeUndefined()
+    })
+  })
+
   describe('edge cases', () => {
     it('treats an item with displayName but no children as an ungrouped bookmark and emits a ParseWarning', async () => {
       const entries = [
