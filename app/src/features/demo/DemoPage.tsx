@@ -150,7 +150,9 @@ export default function DemoPage() {
   }
 
   return (
-    <>
+    // Bounds the flex tree to the real viewport so #bookmark-list scrolls internally
+    // instead of the whole page growing and pushing the canvas out of view.
+    <div className="h-dvh flex flex-col">
       <a
         href="#bookmark-list"
         className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-1/2 focus:-translate-x-1/2 focus:z-50 focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white focus:bg-indigo-500 focus:rounded-md focus:shadow-lg"
@@ -305,6 +307,6 @@ export default function DemoPage() {
           )}
         </section>
       </main>
-    </>
+    </div>
   )
 }
