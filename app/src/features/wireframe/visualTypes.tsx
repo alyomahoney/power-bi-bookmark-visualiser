@@ -33,6 +33,10 @@ export const VISUAL_TYPE_CATEGORY: Record<string, VisualCategory> = {
   esriVisual:           'charts',
   decompositionTreeVisual: 'charts',
   textbox:              'cards',
+  keyDriversVisual:     'charts',
+  scorecard:            'cards',
+  qnaVisual:            'cards',
+  aiNarratives:         'cards',
 }
 
 export const VISUAL_DISPLAY_NAME: Record<string, string> = {
@@ -66,6 +70,10 @@ export const VISUAL_DISPLAY_NAME: Record<string, string> = {
   esriVisual:           'ArcGIS Map',
   decompositionTreeVisual: 'Decomposition Tree',
   textbox:              'Text Box',
+  keyDriversVisual:     'Key Influencers',
+  scorecard:            'Goals',
+  qnaVisual:            'Q&A',
+  aiNarratives:         'Smart Narrative',
 }
 
 export function getVisualCategory(visualType: string): VisualCategory {
@@ -359,6 +367,55 @@ const TextboxIcon: VisualIcon = ({ x, y, w, h }) => {
   )
 }
 
+const KeyDriversIcon: VisualIcon = ({ x, y, w, h }) => {
+  const cx = x + w / 2; const cy = y + h * 0.2; const r = Math.min(w, h) * 0.12
+  return (
+    <>
+      <circle cx={cx} cy={cy} r={r} stroke={S} strokeWidth={sw} fill="none" />
+      <line x1={cx - r * 2.2} y1={cy - r * 1.2} x2={cx - r * 1.1} y2={cy - r * 0.4} stroke={S} strokeWidth={sw} />
+      <line x1={cx + r * 2.2} y1={cy - r * 1.2} x2={cx + r * 1.1} y2={cy - r * 0.4} stroke={S} strokeWidth={sw} />
+      <line x1={cx}           y1={cy + r * 1.8} x2={cx}           y2={cy + r * 0.9} stroke={S} strokeWidth={sw} />
+    </>
+  )
+}
+
+const GoalsIcon: VisualIcon = ({ x, y, w, h }) => {
+  const cx = x + w * 0.38; const topY = y + h * 0.06; const botY = topY + h * 0.32
+  return (
+    <>
+      <line x1={cx} y1={topY} x2={cx} y2={botY} stroke={S} strokeWidth={sw} />
+      <path
+        d={`M${cx},${topY} L${cx + w * 0.22},${topY + h * 0.06} L${cx},${topY + h * 0.12} Z`}
+        stroke={S} strokeWidth={sw} fill={S} fillOpacity={0.3}
+      />
+    </>
+  )
+}
+
+const QnAIcon: VisualIcon = ({ x, y, w, h }) => {
+  const cx = x + w * 0.42; const cy = y + h * 0.16; const r = Math.min(w, h) * 0.1
+  return (
+    <>
+      <circle cx={cx} cy={cy} r={r} stroke={S} strokeWidth={sw} fill="none" />
+      <line x1={cx + r * 0.7} y1={cy + r * 0.7} x2={cx + r * 1.6} y2={cy + r * 1.6} stroke={S} strokeWidth={sw} />
+    </>
+  )
+}
+
+const SmartNarrativeIcon: VisualIcon = ({ x, y, w, h }) => {
+  const ix = x + w * 0.22; const iw = w * 0.56
+  const iy = y + h * 0.16; const lh = h * 0.09
+  const sx = x + w * 0.78; const sy = y + h * 0.1; const sr = Math.min(w, h) * 0.05
+  return (
+    <>
+      <path d={`M${sx},${sy - sr} L${sx},${sy + sr} M${sx - sr},${sy} L${sx + sr},${sy}`} stroke={S} strokeWidth={sw} />
+      <line x1={ix} y1={iy}          x2={ix + iw}       y2={iy}          stroke={S} strokeWidth={sw} />
+      <line x1={ix} y1={iy + lh}     x2={ix + iw}       y2={iy + lh}     stroke={S} strokeWidth={sw} />
+      <line x1={ix} y1={iy + lh * 2} x2={ix + iw * 0.6} y2={iy + lh * 2} stroke={S} strokeWidth={sw} />
+    </>
+  )
+}
+
 export const PLACEHOLDER_ICON: VisualIcon = ({ x, y, w, h }) => {
   const cx = x + w / 2; const cy = y + h * 0.22; const r = Math.min(w, h) * 0.1
   return (
@@ -403,6 +460,10 @@ export const VISUAL_ICON: Record<string, VisualIcon> = {
   esriVisual:                      MapIcon,
   decompositionTreeVisual:         DecompositionTreeIcon,
   textbox:                         TextboxIcon,
+  keyDriversVisual:                KeyDriversIcon,
+  scorecard:                       GoalsIcon,
+  qnaVisual:                       QnAIcon,
+  aiNarratives:                    SmartNarrativeIcon,
 }
 
 export function getVisualIcon(visualType: string): VisualIcon {

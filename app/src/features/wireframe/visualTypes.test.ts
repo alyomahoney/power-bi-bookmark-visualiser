@@ -14,7 +14,7 @@ describe('getVisualCategory', () => {
              'lineChart', 'areaChart', 'waterfallChart', 'funnel', 'scatterChart',
              'hundredPercentStackedBarChart', 'hundredPercentStackedColumnChart',
              'stackedAreaChart', 'ribbonChart', 'map', 'filledMap', 'azureMap',
-             'esriVisual', 'decompositionTreeVisual'])(
+             'esriVisual', 'decompositionTreeVisual', 'keyDriversVisual'])(
       '%s → charts',
       (type) => expect(getVisualCategory(type)).toBe('charts')
     )
@@ -28,7 +28,7 @@ describe('getVisualCategory', () => {
   })
 
   describe('cards', () => {
-    it.each(['cardVisual', 'card', 'kpi', 'gauge', 'textbox'])(
+    it.each(['cardVisual', 'card', 'kpi', 'gauge', 'textbox', 'scorecard', 'qnaVisual', 'aiNarratives'])(
       '%s → cards',
       (type) => expect(getVisualCategory(type)).toBe('cards')
     )
@@ -66,9 +66,9 @@ describe('getVisualCategory', () => {
     })
   })
 
-  it('covers all 30 entries in VISUAL_TYPE_CATEGORY without placeholder', () => {
+  it('covers all 34 entries in VISUAL_TYPE_CATEGORY without placeholder', () => {
     const supportedTypes = Object.keys(VISUAL_TYPE_CATEGORY)
-    expect(supportedTypes).toHaveLength(30)
+    expect(supportedTypes).toHaveLength(34)
     for (const type of supportedTypes) {
       expect(getVisualCategory(type)).not.toBe('placeholder')
     }
@@ -142,6 +142,22 @@ describe('getVisualDisplayName', () => {
     expect(getVisualDisplayName('textbox')).toBe('Text Box')
   })
 
+  it('returns Key Influencers for keyDriversVisual', () => {
+    expect(getVisualDisplayName('keyDriversVisual')).toBe('Key Influencers')
+  })
+
+  it('returns Goals for scorecard', () => {
+    expect(getVisualDisplayName('scorecard')).toBe('Goals')
+  })
+
+  it('returns Q&A for qnaVisual', () => {
+    expect(getVisualDisplayName('qnaVisual')).toBe('Q&A')
+  })
+
+  it('returns Smart Narrative for aiNarratives', () => {
+    expect(getVisualDisplayName('aiNarratives')).toBe('Smart Narrative')
+  })
+
   it('returns Unknown Visual for any unrecognised type', () => {
     expect(getVisualDisplayName('notAVisualType')).toBe('Unknown Visual')
   })
@@ -150,9 +166,9 @@ describe('getVisualDisplayName', () => {
     expect(getVisualDisplayName('')).toBe('Unknown Visual')
   })
 
-  it('covers all 30 entries in VISUAL_DISPLAY_NAME with correct values', () => {
+  it('covers all 34 entries in VISUAL_DISPLAY_NAME with correct values', () => {
     const mappedTypes = Object.keys(VISUAL_DISPLAY_NAME)
-    expect(mappedTypes).toHaveLength(30)
+    expect(mappedTypes).toHaveLength(34)
     for (const type of mappedTypes) {
       expect(getVisualDisplayName(type)).toBe(VISUAL_DISPLAY_NAME[type])
     }
