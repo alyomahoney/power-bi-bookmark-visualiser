@@ -40,6 +40,9 @@ export function WireframeCanvas({ pages, selectedPageId }: WireframeCanvasProps)
     : 'empty'
 
   const { width: canvasWidth, height: canvasHeight } = getCanvasDimensions(pageLayout)
+  // Isotropic viewBox: x spans 0-100, y spans 0-(100 * H/W) so one unit is the
+  // same physical length on both axes, matching normalisePosition's scaling.
+  const viewBoxHeight = (canvasHeight / canvasWidth) * 100
 
   return (
     <div
@@ -49,12 +52,16 @@ export function WireframeCanvas({ pages, selectedPageId }: WireframeCanvasProps)
         display: 'flex',
         alignItems: 'flex-start',
         justifyContent: 'center',
+        containerType: 'size',
       }}
     >
       <div
         style={{
           aspectRatio: `${canvasWidth} / ${canvasHeight}`,
-          width: '100%',
+          // min() of the width/height-limited candidate widths keeps the box locked
+          // to the true page aspect ratio no matter which axis the container clips —
+          // a plain width:100% + maxHeight:100% lets max-height silently distort it.
+          width: `min(100cqw, calc(100cqh * ${canvasWidth} / ${canvasHeight}))`,
           maxWidth: '100%',
           maxHeight: '100%',
           position: 'relative',
@@ -62,8 +69,8 @@ export function WireframeCanvas({ pages, selectedPageId }: WireframeCanvasProps)
         }}
       >
         <motion.svg
-          viewBox="0 0 100 100"
-          preserveAspectRatio="none"
+          viewBox={`0 0 100 ${viewBoxHeight}`}
+          preserveAspectRatio="xMidYMid meet"
           width="100%"
           height="100%"
           data-canvas-state={canvasState}
@@ -88,7 +95,7 @@ export function WireframeCanvas({ pages, selectedPageId }: WireframeCanvasProps)
               <VisualCard
                 key={visual.id}
                 visual={visual}
-                normPos={normalisePosition(visual.position, canvasWidth, canvasHeight)}
+                normPos={normalisePosition(visual.position, canvasWidth)}
                 index={index}
                 opacity={opacity}
                 isAffected={showRing}

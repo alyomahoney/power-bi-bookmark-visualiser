@@ -4,28 +4,28 @@ import type { PageLayout } from '@/types/audit'
 
 describe('normalisePosition', () => {
   it('normalises a position at origin to 0%', () => {
-    const result = normalisePosition({ x: 0, y: 0, width: 0, height: 0 }, 1280, 720)
+    const result = normalisePosition({ x: 0, y: 0, width: 0, height: 0 }, 1280)
     expect(result).toEqual({ xPct: 0, yPct: 0, wPct: 0, hPct: 0 })
   })
 
-  it('normalises full canvas to 100%', () => {
-    const result = normalisePosition({ x: 0, y: 0, width: 1280, height: 720 }, 1280, 720)
-    expect(result).toEqual({ xPct: 0, yPct: 0, wPct: 100, hPct: 100 })
+  it('normalises full canvas width to 100%, height relative to width', () => {
+    const result = normalisePosition({ x: 0, y: 0, width: 1280, height: 720 }, 1280)
+    expect(result).toEqual({ xPct: 0, yPct: 0, wPct: 100, hPct: 56.25 })
   })
 
-  it('normalises a centred half-size visual', () => {
-    const result = normalisePosition({ x: 320, y: 180, width: 640, height: 360 }, 1280, 720)
+  it('normalises a centred half-size visual, y/height scaled by canvas width', () => {
+    const result = normalisePosition({ x: 320, y: 180, width: 640, height: 360 }, 1280)
     expect(result.xPct).toBeCloseTo(25)
-    expect(result.yPct).toBeCloseTo(25)
+    expect(result.yPct).toBeCloseTo(14.0625)
     expect(result.wPct).toBeCloseTo(50)
-    expect(result.hPct).toBeCloseTo(50)
+    expect(result.hPct).toBeCloseTo(28.125)
   })
 
-  it('uses provided canvas dimensions (not hardcoded defaults)', () => {
-    const result = normalisePosition({ x: 512, y: 0, width: 512, height: 768 }, 1024, 768)
+  it('uses provided canvas width (not hardcoded default)', () => {
+    const result = normalisePosition({ x: 512, y: 0, width: 512, height: 768 }, 1024)
     expect(result.xPct).toBeCloseTo(50)
     expect(result.wPct).toBeCloseTo(50)
-    expect(result.hPct).toBeCloseTo(100)
+    expect(result.hPct).toBeCloseTo(75)
   })
 })
 

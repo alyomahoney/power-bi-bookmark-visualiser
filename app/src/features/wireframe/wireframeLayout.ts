@@ -2,16 +2,18 @@ import type { PageLayout } from '@/types/audit'
 
 export const PBIR_DEFAULT_CANVAS = { width: 1280, height: 720 }
 
+// y/height are also divided by canvasWidth (not canvasHeight) so x and y share
+// one physical unit — required for the WireframeCanvas viewBox to stay isotropic,
+// otherwise icons/text drawn with circular/curved geometry render stretched.
 export function normalisePosition(
   pos: { x: number; y: number; width: number; height: number },
   canvasWidth: number,
-  canvasHeight: number,
 ): { xPct: number; yPct: number; wPct: number; hPct: number } {
   return {
     xPct: (pos.x / canvasWidth) * 100,
-    yPct: (pos.y / canvasHeight) * 100,
+    yPct: (pos.y / canvasWidth) * 100,
     wPct: (pos.width / canvasWidth) * 100,
-    hPct: (pos.height / canvasHeight) * 100,
+    hPct: (pos.height / canvasWidth) * 100,
   }
 }
 
