@@ -63,7 +63,7 @@ export function WireframeCanvas({ pages, selectedPageId }: WireframeCanvasProps)
       >
         <motion.svg
           viewBox="0 0 100 100"
-          preserveAspectRatio="xMidYMid meet"
+          preserveAspectRatio="none"
           width="100%"
           height="100%"
           data-canvas-state={canvasState}
