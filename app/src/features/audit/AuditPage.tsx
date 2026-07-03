@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Search } from 'lucide-react'
-import { useAuditReport, useSetAuditReport, useClearAudit, useSelectedBookmark, useSelectBookmark, useSearchQuery, useSetSearchQuery, useClearFilters, useSelectedTypes, useToggleType, useSelectedVisualIds, useToggleVisual, useExitDemoMode, useSetSelectedPageId, useActivePageLayout, useEffectivePageId, useSelectBookmarkWithNavigation } from '@/store/hooks'
+import { useAuditReport, useSetAuditReport, useClearAudit, useSelectedBookmark, useSelectBookmark, useSearchQuery, useSetSearchQuery, useClearFilters, useSelectedTypes, useToggleType, useSelectedVisualIds, useToggleVisual, useClearVisualsForPage, useExitDemoMode, useSetSelectedPageId, useActivePageLayout, useEffectivePageId, useSelectBookmarkWithNavigation } from '@/store/hooks'
 import { sessionCache } from '@/shared/utils/sessionCache'
 import { typeHasAxis } from '@/shared/utils/bookmarkType'
 import { ThemeToggle } from '@/shared/components/ThemeToggle'
@@ -39,6 +39,8 @@ export default function AuditPage() {
   const selectedVisualIds = useSelectedVisualIds(resolvedVisualFilterPageId)
   const toggleVisualForPage = useToggleVisual()
   const toggleVisual = (id: string) => toggleVisualForPage(resolvedVisualFilterPageId, id)
+  const clearVisualsForPage = useClearVisualsForPage()
+  const clearVisualFilter = () => clearVisualsForPage(resolvedVisualFilterPageId)
   const setSelectedPageId = useSetSelectedPageId()
 
   useEffect(() => {
@@ -203,6 +205,7 @@ export default function AuditPage() {
                 visuals={visuals}
                 selectedVisualIds={selectedVisualIds}
                 onToggleVisual={toggleVisual}
+                onClear={clearVisualFilter}
               />
             )}
             {(selectedTypes.length > 0 || selectedVisualIds.length > 0) && (

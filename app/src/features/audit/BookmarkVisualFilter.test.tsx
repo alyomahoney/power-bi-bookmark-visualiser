@@ -23,6 +23,7 @@ describe('BookmarkVisualFilter', () => {
         visuals={visuals}
         selectedVisualIds={[]}
         onToggleVisual={vi.fn()}
+        onClear={vi.fn()}
       />
     )
     expect(screen.getByRole('button', { name: /^visual$/i })).toBeInTheDocument()
@@ -34,6 +35,7 @@ describe('BookmarkVisualFilter', () => {
         visuals={visuals}
         selectedVisualIds={['v-1']}
         onToggleVisual={vi.fn()}
+        onClear={vi.fn()}
       />
     )
     expect(screen.getByText('Visual (1)')).toBeInTheDocument()
@@ -45,6 +47,7 @@ describe('BookmarkVisualFilter', () => {
         visuals={visuals}
         selectedVisualIds={[]}
         onToggleVisual={vi.fn()}
+        onClear={vi.fn()}
       />
     )
     await userEvent.click(screen.getByRole('button', { name: /visual/i }))
@@ -59,6 +62,7 @@ describe('BookmarkVisualFilter', () => {
         visuals={visuals}
         selectedVisualIds={[]}
         onToggleVisual={onToggleVisual}
+        onClear={vi.fn()}
       />
     )
     await userEvent.click(screen.getByRole('button', { name: /visual/i }))
@@ -72,6 +76,7 @@ describe('BookmarkVisualFilter', () => {
         visuals={visuals}
         selectedVisualIds={['v-1']}
         onToggleVisual={vi.fn()}
+        onClear={vi.fn()}
       />
     )
     await userEvent.click(screen.getByRole('button', { name: /visual/i }))
@@ -86,6 +91,7 @@ describe('BookmarkVisualFilter', () => {
         visuals={unknownVisuals}
         selectedVisualIds={[]}
         onToggleVisual={vi.fn()}
+        onClear={vi.fn()}
       />
     )
     await userEvent.click(screen.getByRole('button', { name: /visual/i }))
@@ -98,11 +104,67 @@ describe('BookmarkVisualFilter', () => {
         visuals={visuals}
         selectedVisualIds={[]}
         onToggleVisual={vi.fn()}
+        onClear={vi.fn()}
       />
     )
     await userEvent.click(screen.getByRole('button', { name: /visual/i }))
     await userEvent.click(screen.getByRole('menuitemcheckbox', { name: /bar chart/i }))
     expect(screen.getByRole('menuitemcheckbox', { name: /table/i })).toBeInTheDocument()
+  })
+
+  it('does not render a Clear button when no visuals are selected', async () => {
+    render(
+      <BookmarkVisualFilter
+        visuals={visuals}
+        selectedVisualIds={[]}
+        onToggleVisual={vi.fn()}
+        onClear={vi.fn()}
+      />
+    )
+    await userEvent.click(screen.getByRole('button', { name: /visual/i }))
+    expect(screen.queryByRole('button', { name: /^clear$/i })).not.toBeInTheDocument()
+  })
+
+  it('renders a Clear button at the top of the list when visuals are selected', async () => {
+    render(
+      <BookmarkVisualFilter
+        visuals={visuals}
+        selectedVisualIds={['v-1']}
+        onToggleVisual={vi.fn()}
+        onClear={vi.fn()}
+      />
+    )
+    await userEvent.click(screen.getByRole('button', { name: /visual/i }))
+    expect(screen.getByRole('button', { name: /^clear$/i })).toBeInTheDocument()
+  })
+
+  it('calls onClear when the Clear button is clicked', async () => {
+    const onClear = vi.fn()
+    render(
+      <BookmarkVisualFilter
+        visuals={visuals}
+        selectedVisualIds={['v-1']}
+        onToggleVisual={vi.fn()}
+        onClear={onClear}
+      />
+    )
+    await userEvent.click(screen.getByRole('button', { name: /visual/i }))
+    await userEvent.click(screen.getByRole('button', { name: /^clear$/i }))
+    expect(onClear).toHaveBeenCalledOnce()
+  })
+
+  it('keeps the dropdown open after clicking Clear', async () => {
+    render(
+      <BookmarkVisualFilter
+        visuals={visuals}
+        selectedVisualIds={['v-1']}
+        onToggleVisual={vi.fn()}
+        onClear={vi.fn()}
+      />
+    )
+    await userEvent.click(screen.getByRole('button', { name: /visual/i }))
+    await userEvent.click(screen.getByRole('button', { name: /^clear$/i }))
+    expect(screen.getByRole('menuitemcheckbox', { name: /bar chart/i })).toBeInTheDocument()
   })
 
   it('disambiguates duplicate visual types with #N suffix', async () => {
@@ -115,6 +177,7 @@ describe('BookmarkVisualFilter', () => {
         visuals={dupVisuals}
         selectedVisualIds={[]}
         onToggleVisual={vi.fn()}
+        onClear={vi.fn()}
       />
     )
     await userEvent.click(screen.getByRole('button', { name: /visual/i }))

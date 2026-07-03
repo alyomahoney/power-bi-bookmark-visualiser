@@ -99,6 +99,10 @@ export function useToggleVisual() {
   return useFilterStore((state) => state.toggleVisual)
 }
 
+export function useClearVisualsForPage() {
+  return useFilterStore((state) => state.clearVisualsForPage)
+}
+
 export function useDemoMode() {
   return useDemoStore((state) => state.isDemoMode)
 }

@@ -8,6 +8,7 @@ interface FilterState {
   setSearchQuery: (query: string) => void
   toggleType: (type: BookmarkAxis) => void
   toggleVisual: (pageId: string, id: string) => void
+  clearVisualsForPage: (pageId: string) => void
   clearFilters: () => void
 }
 
@@ -33,6 +34,12 @@ export const useFilterStore = create<FilterState>((set) => ({
             : [...current, id],
         },
       }
+    }),
+  clearVisualsForPage: (pageId) =>
+    set((state) => {
+      const next = { ...state.selectedVisualIdsByPage }
+      delete next[pageId]
+      return { selectedVisualIdsByPage: next }
     }),
   clearFilters: () => set({ searchQuery: '', selectedTypes: [], selectedVisualIdsByPage: {} }),
 }))

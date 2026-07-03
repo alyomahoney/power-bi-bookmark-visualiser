@@ -13,6 +13,7 @@ import {
   useToggleType,
   useSelectedVisualIds,
   useToggleVisual,
+  useClearVisualsForPage,
   useExitDemoMode,
   useLoadDemoReport,
   useSetSelectedPageId,
@@ -57,6 +58,8 @@ export default function DemoPage() {
   const selectedVisualIds = useSelectedVisualIds(resolvedVisualFilterPageId)
   const toggleVisualForPage = useToggleVisual()
   const toggleVisual = (id: string) => toggleVisualForPage(resolvedVisualFilterPageId, id)
+  const clearVisualsForPage = useClearVisualsForPage()
+  const clearVisualFilter = () => clearVisualsForPage(resolvedVisualFilterPageId)
   const setSelectedPageId = useSetSelectedPageId()
 
   useEffect(() => {
@@ -205,6 +208,7 @@ export default function DemoPage() {
                 visuals={visuals}
                 selectedVisualIds={selectedVisualIds}
                 onToggleVisual={toggleVisual}
+                onClear={clearVisualFilter}
               />
             )}
             {(selectedTypes.length > 0 || selectedVisualIds.length > 0) && (

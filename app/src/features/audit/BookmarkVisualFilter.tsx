@@ -5,6 +5,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuCheckboxItem,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -14,6 +15,7 @@ interface Props {
   visuals: VisualElement[]
   selectedVisualIds: string[]
   onToggleVisual: (id: string) => void
+  onClear: () => void
 }
 
 function resolveLabel(v: VisualElement): string {
@@ -41,7 +43,7 @@ function buildVisualLabels(sortedVisuals: VisualElement[]): Map<string, string> 
   return labels
 }
 
-export function BookmarkVisualFilter({ visuals, selectedVisualIds, onToggleVisual }: Props) {
+export function BookmarkVisualFilter({ visuals, selectedVisualIds, onToggleVisual, onClear }: Props) {
   const activeCount = selectedVisualIds.length
   const sortedVisuals = useMemo(
     () => [...visuals].sort((a, b) => (a.position.tabOrder ?? Infinity) - (b.position.tabOrder ?? Infinity)),
@@ -72,6 +74,18 @@ export function BookmarkVisualFilter({ visuals, selectedVisualIds, onToggleVisua
         Filter by visuals on the current page
       </span>
       <DropdownMenuContent>
+        {activeCount > 0 && (
+          <>
+            <button
+              type="button"
+              onClick={onClear}
+              className="w-full text-left px-1.5 py-1 text-xs text-text-secondary hover:text-text-primary rounded-md hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+            >
+              Clear
+            </button>
+            <DropdownMenuSeparator />
+          </>
+        )}
         {sortedVisuals.map((visual) => (
           <DropdownMenuCheckboxItem
             key={visual.id}

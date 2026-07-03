@@ -93,4 +93,17 @@ describe('filterStore', () => {
     useFilterStore.getState().clearFilters()
     expect(useFilterStore.getState().selectedVisualIdsByPage).toEqual({})
   })
+
+  it('clearVisualsForPage removes only the given page\'s entry', () => {
+    useFilterStore.setState({ selectedVisualIdsByPage: { 'page-1': ['visual-1'], 'page-2': ['visual-2'] } })
+    useFilterStore.getState().clearVisualsForPage('page-1')
+    expect(useFilterStore.getState().selectedVisualIdsByPage['page-1']).toBeUndefined()
+    expect(useFilterStore.getState().selectedVisualIdsByPage['page-2']).toEqual(['visual-2'])
+  })
+
+  it('clearVisualsForPage is a no-op when the page has no entry', () => {
+    useFilterStore.setState({ selectedVisualIdsByPage: { 'page-2': ['visual-2'] } })
+    useFilterStore.getState().clearVisualsForPage('page-1')
+    expect(useFilterStore.getState().selectedVisualIdsByPage).toEqual({ 'page-2': ['visual-2'] })
+  })
 })
