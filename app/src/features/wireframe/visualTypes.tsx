@@ -27,6 +27,12 @@ export const VISUAL_TYPE_CATEGORY: Record<string, VisualCategory> = {
   pivotTable:           'tables',
   slicer:               'slicers',
   advancedSlicerVisual: 'slicers',
+  map:                  'charts',
+  filledMap:            'charts',
+  azureMap:             'charts',
+  esriVisual:           'charts',
+  decompositionTreeVisual: 'charts',
+  textbox:              'cards',
 }
 
 export const VISUAL_DISPLAY_NAME: Record<string, string> = {
@@ -54,6 +60,12 @@ export const VISUAL_DISPLAY_NAME: Record<string, string> = {
   pivotTable:           'Matrix',
   slicer:               'Slicer',
   advancedSlicerVisual: 'Button Slicer',
+  map:                  'Map',
+  filledMap:            'Filled Map',
+  azureMap:             'Azure Map',
+  esriVisual:           'ArcGIS Map',
+  decompositionTreeVisual: 'Decomposition Tree',
+  textbox:              'Text Box',
 }
 
 export function getVisualCategory(visualType: string): VisualCategory {
@@ -308,6 +320,45 @@ const ButtonSlicerIcon: VisualIcon = ({ x, y, w, h }) => {
   )
 }
 
+const MapIcon: VisualIcon = ({ x, y, w, h }) => {
+  const cx = x + w / 2; const cy = y + h * 0.16; const r = Math.min(w, h) * 0.14
+  return (
+    <>
+      <path
+        d={`M${cx},${cy - r * 1.6} C${cx + r * 1.3},${cy - r * 1.6} ${cx + r * 1.3},${cy + r * 0.2} ${cx},${cy + r * 1.8} C${cx - r * 1.3},${cy + r * 0.2} ${cx - r * 1.3},${cy - r * 1.6} ${cx},${cy - r * 1.6} Z`}
+        stroke={S} strokeWidth={sw} fill="none"
+      />
+      <circle cx={cx} cy={cy - r * 0.5} r={r * 0.45} fill={S} />
+    </>
+  )
+}
+
+const DecompositionTreeIcon: VisualIcon = ({ x, y, w, h }) => {
+  const cx = x + w / 2; const rootY = y + h * 0.14; const childY = rootY + h * 0.2
+  const leftX = cx - w * 0.22; const rightX = cx + w * 0.22
+  return (
+    <>
+      <line x1={cx} y1={rootY} x2={leftX}  y2={childY} stroke={S} strokeWidth={sw} />
+      <line x1={cx} y1={rootY} x2={rightX} y2={childY} stroke={S} strokeWidth={sw} />
+      <circle cx={cx}     cy={rootY}  r={0.5} fill={S} />
+      <circle cx={leftX}  cy={childY} r={0.5} fill={S} />
+      <circle cx={rightX} cy={childY} r={0.5} fill={S} />
+    </>
+  )
+}
+
+const TextboxIcon: VisualIcon = ({ x, y, w, h }) => {
+  const ix = x + w * 0.2; const iw = w * 0.6
+  const iy = y + h * 0.13; const lh = h * 0.09
+  return (
+    <>
+      <line x1={ix} y1={iy}          x2={ix + iw}       y2={iy}          stroke={S} strokeWidth={sw} />
+      <line x1={ix} y1={iy + lh}     x2={ix + iw}       y2={iy + lh}     stroke={S} strokeWidth={sw} />
+      <line x1={ix} y1={iy + lh * 2} x2={ix + iw * 0.6} y2={iy + lh * 2} stroke={S} strokeWidth={sw} />
+    </>
+  )
+}
+
 export const PLACEHOLDER_ICON: VisualIcon = ({ x, y, w, h }) => {
   const cx = x + w / 2; const cy = y + h * 0.22; const r = Math.min(w, h) * 0.1
   return (
@@ -346,6 +397,12 @@ export const VISUAL_ICON: Record<string, VisualIcon> = {
   pivotTable:                      MatrixIcon,
   slicer:                          SlicerIcon,
   advancedSlicerVisual:            ButtonSlicerIcon,
+  map:                             MapIcon,
+  filledMap:                       MapIcon,
+  azureMap:                        MapIcon,
+  esriVisual:                      MapIcon,
+  decompositionTreeVisual:         DecompositionTreeIcon,
+  textbox:                         TextboxIcon,
 }
 
 export function getVisualIcon(visualType: string): VisualIcon {
