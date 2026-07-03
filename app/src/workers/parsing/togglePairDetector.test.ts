@@ -61,7 +61,7 @@ describe('detectTogglePairs', () => {
       const bk: Bookmark = {
         id: 'bk-1',
         name: 'bk-1',
-        type: 'mixed',
+        type: 'data-display',
         affectedVisualIds: ['visual-A'],
         hiddenVisualIds: [],
         suppressDisplay: false,

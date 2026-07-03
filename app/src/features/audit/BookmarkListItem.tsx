@@ -3,11 +3,17 @@ import { Link2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import type { Bookmark, BookmarkType } from '@/types/audit'
+import { getTypeBadgeLabel } from '@/shared/utils/bookmarkType'
 
-const BADGE_LABEL: Record<BookmarkType, string> = {
-  display: 'Disp',
-  data: 'Data',
-  mixed: 'Mix',
+const ARIA_LABEL: Record<BookmarkType, string> = {
+  none: 'none',
+  data: 'data',
+  display: 'display',
+  page: 'page',
+  'data-display': 'data and display',
+  'data-page': 'data and page',
+  'display-page': 'display and page',
+  all: 'data, display, and page',
 }
 
 interface Props {
@@ -27,7 +33,7 @@ export const BookmarkListItem = React.forwardRef<HTMLDivElement, Props>(
         aria-selected={isSelected}
         tabIndex={tabIndex}
         onClick={onClick}
-        aria-label={`${bookmark.name}, ${bookmark.type} type${toggleKind !== undefined ? `, toggle ${toggleKind}` : ''}`}
+        aria-label={`${bookmark.name}, ${ARIA_LABEL[bookmark.type] ?? 'unknown'} type${toggleKind !== undefined ? `, toggle ${toggleKind}` : ''}`}
         className={cn(
           'flex items-center gap-2 px-3 h-8 cursor-pointer hover:bg-bg-surface border-l-2',
           'focus-visible:outline-none focus-visible:ring-inset focus-visible:ring-2',
@@ -43,7 +49,7 @@ export const BookmarkListItem = React.forwardRef<HTMLDivElement, Props>(
           variant="secondary"
           className="text-[8px] font-bold uppercase px-[3px] py-0 rounded-full text-text-muted shrink-0"
         >
-          {BADGE_LABEL[bookmark.type]}
+          {getTypeBadgeLabel(bookmark.type)}
         </Badge>
         {toggleKind !== undefined && (
           <Link2

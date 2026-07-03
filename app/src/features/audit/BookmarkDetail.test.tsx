@@ -75,10 +75,10 @@ describe('BookmarkDetail', () => {
     })
   })
 
-  describe('mixed type', () => {
+  describe('data-display type', () => {
     it('renders both Affected Visuals and Filter State regions', () => {
       const bookmark = buildBookmark()
-        .withType('mixed')
+        .withType('data-display')
         .withAffectedVisualIds(['v-001'])
         .withFilterState({ slicer: 'Q1' })
         .build()
@@ -89,7 +89,7 @@ describe('BookmarkDetail', () => {
 
     it('shows "No visuals affected" when affectedVisualIds is empty', () => {
       const bookmark = buildBookmark()
-        .withType('mixed')
+        .withType('data-display')
         .withAffectedVisualIds([])
         .withFilterState({ slicer: 'Q1' })
         .build()
@@ -99,7 +99,7 @@ describe('BookmarkDetail', () => {
 
     it('shows "No filter state captured" when filterState is null', () => {
       const bookmark = buildBookmark()
-        .withType('mixed')
+        .withType('data-display')
         .withAffectedVisualIds(['v-001'])
         .withFilterState(null)
         .build()
@@ -116,10 +116,10 @@ describe('BookmarkDetail — colour-independence badge labels', () => {
     expect(screen.getByText('Data')).toBeInTheDocument()
   })
 
-  it('renders "Mix" badge text for mixed type bookmark', () => {
-    const bookmark = buildBookmark().withType('mixed').withAffectedVisualIds([]).withFilterState(null).build()
+  it('renders "Data/Disp" badge text for data-display type bookmark', () => {
+    const bookmark = buildBookmark().withType('data-display').withAffectedVisualIds([]).withFilterState(null).build()
     render(<BookmarkDetail bookmark={bookmark} />)
-    expect(screen.getByText('Mix')).toBeInTheDocument()
+    expect(screen.getByText('Data/Disp')).toBeInTheDocument()
   })
 })
 
@@ -136,8 +136,8 @@ describe('BookmarkDetail — badge colour independence', () => {
     expect(container.querySelector('[data-slot="badge"]')).toHaveAttribute('data-variant', 'secondary')
   })
 
-  it('mixed type badge uses data-variant="secondary" — same colour as all other types', () => {
-    const bookmark = buildBookmark().withType('mixed').withAffectedVisualIds([]).withFilterState(null).build()
+  it('data-display type badge uses data-variant="secondary" — same colour as all other types', () => {
+    const bookmark = buildBookmark().withType('data-display').withAffectedVisualIds([]).withFilterState(null).build()
     const { container } = render(<BookmarkDetail bookmark={bookmark} />)
     expect(container.querySelector('[data-slot="badge"]')).toHaveAttribute('data-variant', 'secondary')
   })

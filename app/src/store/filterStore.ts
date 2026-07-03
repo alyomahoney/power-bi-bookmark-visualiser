@@ -1,12 +1,12 @@
 import { create } from 'zustand'
-import type { BookmarkType } from '@/types/audit'
+import type { BookmarkAxis } from '@/types/audit'
 
 interface FilterState {
   searchQuery: string
-  selectedTypes: BookmarkType[]
+  selectedTypes: BookmarkAxis[]
   selectedVisualIds: string[]
   setSearchQuery: (query: string) => void
-  toggleType: (type: BookmarkType) => void
+  toggleType: (type: BookmarkAxis) => void
   toggleVisual: (id: string) => void
   clearFilters: () => void
 }

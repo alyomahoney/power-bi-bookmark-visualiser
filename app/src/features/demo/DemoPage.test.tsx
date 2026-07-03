@@ -121,6 +121,29 @@ describe('DemoPage', () => {
   })
 })
 
+describe('DemoPage — bookmark type filter', () => {
+  beforeEach(() => {
+    useDemoStore.setState({ isDemoMode: false, loadDemoReport: vi.fn(), exitDemoMode: vi.fn() })
+    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIds: [] })
+  })
+
+  afterEach(() => {
+    useAuditStore.setState({ auditReport: null })
+  })
+
+  it('uses OR logic when multiple axes selected', () => {
+    const b1 = buildBookmark().withId('bk-1').withName('Display BM').withType('display').build()
+    const b2 = buildBookmark().withId('bk-2').withName('Data BM').withType('data').build()
+    const b3 = buildBookmark().withId('bk-3').withName('Page BM').withType('page').build()
+    useAuditStore.setState({ auditReport: makeReport({ bookmarks: [b1, b2, b3] }) })
+    useFilterStore.setState({ selectedTypes: ['display', 'data'] })
+    render(<DemoPage />)
+    expect(screen.getByText('Display BM')).toBeInTheDocument()
+    expect(screen.getByText('Data BM')).toBeInTheDocument()
+    expect(screen.queryByText('Page BM')).not.toBeInTheDocument()
+  })
+})
+
 describe('DemoPage — skip navigation link', () => {
   beforeEach(() => {
     useAuditStore.setState({ auditReport: sampleData as AuditReport })

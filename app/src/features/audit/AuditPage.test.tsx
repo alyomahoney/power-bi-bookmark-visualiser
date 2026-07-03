@@ -565,16 +565,50 @@ describe('AuditPage — bookmark type filter', () => {
     expect(screen.queryByText('Data BM')).not.toBeInTheDocument()
   })
 
-  it('uses OR logic when multiple types selected', () => {
+  it('uses OR logic when multiple axes selected', () => {
     const b1 = buildBookmark().withId('bk-1').withName('Display BM').withType('display').build()
     const b2 = buildBookmark().withId('bk-2').withName('Data BM').withType('data').build()
-    const b3 = buildBookmark().withId('bk-3').withName('Mixed BM').withType('mixed').build()
+    const b3 = buildBookmark().withId('bk-3').withName('Page BM').withType('page').build()
     useAuditStore.setState({ auditReport: makeReport({ bookmarks: [b1, b2, b3] }) })
     useFilterStore.setState({ selectedTypes: ['display', 'data'] })
     render(<AuditPage />)
     expect(screen.getByText('Display BM')).toBeInTheDocument()
     expect(screen.getByText('Data BM')).toBeInTheDocument()
-    expect(screen.queryByText('Mixed BM')).not.toBeInTheDocument()
+    expect(screen.queryByText('Page BM')).not.toBeInTheDocument()
+  })
+
+  it('filters bookmark list to show only bookmarks with the page axis when Page alone is selected', () => {
+    const b1 = buildBookmark().withId('bk-1').withName('Page BM').withType('page').build()
+    const b2 = buildBookmark().withId('bk-2').withName('Display BM').withType('display').build()
+    useAuditStore.setState({ auditReport: makeReport({ bookmarks: [b1, b2] }) })
+    useFilterStore.setState({ selectedTypes: ['page'] })
+    render(<AuditPage />)
+    expect(screen.getByText('Page BM')).toBeInTheDocument()
+    expect(screen.queryByText('Display BM')).not.toBeInTheDocument()
+  })
+
+  it('checking Data and Page shows every type containing either axis, and hides display-only and none', () => {
+    const matching = [
+      buildBookmark().withId('bk-1').withName('Data BM').withType('data').build(),
+      buildBookmark().withId('bk-2').withName('Page BM').withType('page').build(),
+      buildBookmark().withId('bk-3').withName('Data+Disp BM').withType('data-display').build(),
+      buildBookmark().withId('bk-4').withName('Data+Page BM').withType('data-page').build(),
+      buildBookmark().withId('bk-5').withName('Disp+Page BM').withType('display-page').build(),
+      buildBookmark().withId('bk-6').withName('All BM').withType('all').build(),
+    ]
+    const nonMatching = [
+      buildBookmark().withId('bk-7').withName('Display Only BM').withType('display').build(),
+      buildBookmark().withId('bk-8').withName('None BM').withType('none').build(),
+    ]
+    useAuditStore.setState({ auditReport: makeReport({ bookmarks: [...matching, ...nonMatching] }) })
+    useFilterStore.setState({ selectedTypes: ['data', 'page'] })
+    render(<AuditPage />)
+    for (const b of matching) {
+      expect(screen.getByText(b.name)).toBeInTheDocument()
+    }
+    for (const b of nonMatching) {
+      expect(screen.queryByText(b.name)).not.toBeInTheDocument()
+    }
   })
 
   it('combines type filter and search query with AND logic', () => {

@@ -22,16 +22,28 @@ describe('BookmarkListItem', () => {
     expect(screen.getByText('Data')).toBeInTheDocument()
   })
 
-  it('renders "Mix" badge text for mixed type bookmark', () => {
-    const bookmark = buildBookmark().withType('mixed').build()
+  it('renders "Data/Disp" badge text for data-display type bookmark', () => {
+    const bookmark = buildBookmark().withType('data-display').build()
     render(<BookmarkListItem bookmark={bookmark} />)
-    expect(screen.getByText('Mix')).toBeInTheDocument()
+    expect(screen.getByText('Data/Disp')).toBeInTheDocument()
+  })
+
+  it('renders "None" badge text for none type bookmark', () => {
+    const bookmark = buildBookmark().withType('none').build()
+    render(<BookmarkListItem bookmark={bookmark} />)
+    expect(screen.getByText('None')).toBeInTheDocument()
   })
 
   it('container aria-label includes bookmark name and type', () => {
     const bookmark = buildBookmark().withName('Sales View').withType('display').build()
     render(<BookmarkListItem bookmark={bookmark} />)
     expect(screen.getByRole('option', { name: 'Sales View, display type' })).toBeInTheDocument()
+  })
+
+  it('container aria-label humanizes a multi-axis type', () => {
+    const bookmark = buildBookmark().withName('Combo View').withType('data-page').build()
+    render(<BookmarkListItem bookmark={bookmark} />)
+    expect(screen.getByRole('option', { name: 'Combo View, data and page type' })).toBeInTheDocument()
   })
 
   it('does not render toggle indicator when toggleKind is not provided', () => {
@@ -112,8 +124,8 @@ describe('BookmarkListItem — badge colour independence', () => {
     expect(container.querySelector('[data-slot="badge"]')).toHaveAttribute('data-variant', 'secondary')
   })
 
-  it('mixed type badge uses data-variant="secondary" — same colour as all other types', () => {
-    const bookmark = buildBookmark().withType('mixed').build()
+  it('data-display type badge uses data-variant="secondary" — same colour as all other types', () => {
+    const bookmark = buildBookmark().withType('data-display').build()
     const { container } = render(<BookmarkListItem bookmark={bookmark} />)
     expect(container.querySelector('[data-slot="badge"]')).toHaveAttribute('data-variant', 'secondary')
   })

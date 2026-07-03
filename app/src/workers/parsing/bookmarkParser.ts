@@ -160,7 +160,7 @@ export async function parseBookmarks(
       bookmarks.push({
         id: parsed.name,
         name: parsed.displayName,
-        type: classifyBookmarkType({ rawPayload }),
+        type: classifyBookmarkType({ rawPayload }, targetPageId),
         affectedVisualIds,
         hiddenVisualIds: parseHiddenVisualIds(parsed.explorationState ?? null),
         suppressDisplay: options.suppressDisplay === true,

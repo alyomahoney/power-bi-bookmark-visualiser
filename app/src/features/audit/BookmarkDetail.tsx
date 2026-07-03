@@ -1,20 +1,15 @@
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import type { Bookmark, BookmarkType } from '@/types/audit'
-
-const TYPE_LABEL: Record<BookmarkType, string> = {
-  display: 'Disp',
-  data: 'Data',
-  mixed: 'Mix',
-}
+import type { Bookmark } from '@/types/audit'
+import { typeHasAxis, getTypeBadgeLabel } from '@/shared/utils/bookmarkType'
 
 interface Props {
   bookmark: Bookmark
 }
 
 export function BookmarkDetail({ bookmark }: Props) {
-  const showAffectedVisuals = bookmark.type === 'display' || bookmark.type === 'mixed'
-  const showFilterState = bookmark.type === 'data' || bookmark.type === 'mixed'
+  const showAffectedVisuals = typeHasAxis(bookmark.type, 'display')
+  const showFilterState = typeHasAxis(bookmark.type, 'data')
 
   return (
     <div className="p-6 overflow-y-auto h-full">
@@ -26,7 +21,7 @@ export function BookmarkDetail({ bookmark }: Props) {
           variant="secondary"
           className="text-[8px] font-bold uppercase px-[3px] py-0 rounded-full text-text-muted shrink-0"
         >
-          {TYPE_LABEL[bookmark.type]}
+          {getTypeBadgeLabel(bookmark.type)}
         </Badge>
       </div>
 

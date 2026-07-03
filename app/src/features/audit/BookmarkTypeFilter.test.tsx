@@ -18,12 +18,12 @@ describe('BookmarkTypeFilter', () => {
     expect(screen.getByText('Type (2)')).toBeInTheDocument()
   })
 
-  it('shows Display, Data, Mixed options after opening dropdown', async () => {
+  it('shows Data, Display, Page options after opening dropdown', async () => {
     render(<BookmarkTypeFilter selectedTypes={[]} onToggleType={vi.fn()} />)
     await userEvent.click(screen.getByRole('button', { name: /type/i }))
     expect(screen.getByRole('menuitemcheckbox', { name: /display/i })).toBeInTheDocument()
     expect(screen.getByRole('menuitemcheckbox', { name: /data/i })).toBeInTheDocument()
-    expect(screen.getByRole('menuitemcheckbox', { name: /mixed/i })).toBeInTheDocument()
+    expect(screen.getByRole('menuitemcheckbox', { name: /page/i })).toBeInTheDocument()
   })
 
   it('calls onToggleType with "display" when Display item clicked', async () => {

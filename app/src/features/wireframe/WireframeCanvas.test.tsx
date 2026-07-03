@@ -348,8 +348,8 @@ describe('WireframeCanvas', () => {
       expect(glowRect).toBeUndefined()
     })
 
-    it("Test D: 'mixed' type bookmark — both amber glow AND indigo ring present on affected visual", () => {
-      const bk = makeBookmark({ type: 'mixed', suppressDisplay: false, affectedVisualIds: ['v-affected'], hiddenVisualIds: [] })
+    it("Test D: 'data-display' type bookmark — both amber glow AND indigo ring present on affected visual", () => {
+      const bk = makeBookmark({ type: 'data-display', suppressDisplay: false, affectedVisualIds: ['v-affected'], hiddenVisualIds: [] })
       useAuditStore.setState({ auditReport: { bookmarks: [bk], pages: [], activePageId: '' } })
       useUiStore.setState({ selectedBookmarkId: 'bk-glow' })
       const { container } = render(<WireframeCanvas pages={[glowPageLayout]} selectedPageId={glowPageLayout.pageId} />)

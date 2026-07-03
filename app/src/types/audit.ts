@@ -11,7 +11,17 @@ export interface BookmarkOptions {
   targetVisualNames?: string[]
 }
 
-export type BookmarkType = 'display' | 'data' | 'mixed'
+export type BookmarkAxis = 'data' | 'display' | 'page'
+
+export type BookmarkType =
+  | 'none'
+  | 'data'
+  | 'display'
+  | 'page'
+  | 'data-display'
+  | 'data-page'
+  | 'display-page'
+  | 'all'
 
 export interface Bookmark {
   id: string

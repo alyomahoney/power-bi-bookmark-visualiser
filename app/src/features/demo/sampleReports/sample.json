@@ -60,7 +60,7 @@
     {
       "id": "bm-north-region",
       "name": "North Region",
-      "type": "data",
+      "type": "data-page",
       "affectedVisualIds": [],
       "hiddenVisualIds": [],
       "suppressDisplay": true,
@@ -118,7 +118,7 @@
     {
       "id": "bm-top-products-focus",
       "name": "Top Products Focus",
-      "type": "mixed",
+      "type": "data-display",
       "affectedVisualIds": ["regionMap", "salesTable", "productBarChart"],
       "hiddenVisualIds": ["regionMap", "salesTable"],
       "suppressDisplay": false,

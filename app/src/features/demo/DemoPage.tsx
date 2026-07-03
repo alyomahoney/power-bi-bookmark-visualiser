@@ -21,6 +21,7 @@ import {
   useSelectBookmarkWithNavigation,
 } from '@/store/hooks'
 import { sessionCache } from '@/shared/utils/sessionCache'
+import { typeHasAxis } from '@/shared/utils/bookmarkType'
 import { ThemeToggle } from '@/shared/components/ThemeToggle'
 import { AppLogo } from '@/shared/components/AppLogo'
 import { BookmarkDetail } from '@/features/audit/BookmarkDetail'
@@ -94,7 +95,7 @@ export default function DemoPage() {
       result = result.filter(b => b.name.toLowerCase().includes(q))
     }
     if (selectedTypes.length > 0) {
-      result = result.filter(b => selectedTypes.includes(b.type))
+      result = result.filter(b => selectedTypes.some(axis => typeHasAxis(b.type, axis)))
     }
     if (selectedVisualIds.length > 0) {
       result = result.filter(b => selectedVisualIds.some(id => b.affectedVisualIds.includes(id)))

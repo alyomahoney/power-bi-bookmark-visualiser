@@ -77,7 +77,7 @@ describe('parseBookmarks', () => {
       const { bookmarks } = await parseBookmarks(entries)
       expect(bookmarks[0].id).toBe(BK_ID)
       expect(bookmarks[0].name).toBe('My Bookmark')
-      expect(bookmarks[0].type).toBe('mixed')
+      expect(bookmarks[0].type).toBe('all')
     })
 
     it('sets affectedVisualIds from targetVisualNames when applyOnlyToTargetVisuals is true', async () => {
@@ -239,7 +239,7 @@ describe('parseBookmarks', () => {
 
   describe('type classification integration', () => {
     it('assigns type "data" to a bookmark with suppressDisplay: true', async () => {
-      const payload = { ...minimalPayload, options: { suppressDisplay: true } }
+      const payload = { ...minimalPayload, options: { suppressDisplay: true }, explorationState: null }
       const entries = [
         makeBookmarksJsonEntry([{ name: BK_ID }]),
         makeBookmarkEntry(BK_ID, payload),
@@ -249,13 +249,41 @@ describe('parseBookmarks', () => {
     })
 
     it('assigns type "display" to a bookmark with suppressData: true', async () => {
-      const payload = { ...minimalPayload, options: { suppressData: true } }
+      const payload = { ...minimalPayload, options: { suppressData: true }, explorationState: null }
       const entries = [
         makeBookmarksJsonEntry([{ name: BK_ID }]),
         makeBookmarkEntry(BK_ID, payload),
       ]
       const { bookmarks } = await parseBookmarks(entries)
       expect(bookmarks[0].type).toBe('display')
+    })
+
+    it('assigns type "data-page" to a bookmark with suppressDisplay: true and a targetPageId', async () => {
+      const payload = {
+        ...minimalPayload,
+        options: { suppressDisplay: true },
+        explorationState: { activeSection: 'page01', sections: {} },
+      }
+      const entries = [
+        makeBookmarksJsonEntry([{ name: BK_ID }]),
+        makeBookmarkEntry(BK_ID, payload),
+      ]
+      const { bookmarks } = await parseBookmarks(entries)
+      expect(bookmarks[0].type).toBe('data-page')
+    })
+
+    it('assigns type "all" to a bookmark capturing data, display, and page', async () => {
+      const payload = {
+        ...minimalPayload,
+        options: {},
+        explorationState: { activeSection: 'page01', sections: {} },
+      }
+      const entries = [
+        makeBookmarksJsonEntry([{ name: BK_ID }]),
+        makeBookmarkEntry(BK_ID, payload),
+      ]
+      const { bookmarks } = await parseBookmarks(entries)
+      expect(bookmarks[0].type).toBe('all')
     })
   })
 

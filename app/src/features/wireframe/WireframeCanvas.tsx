@@ -4,6 +4,7 @@ import type { PageLayout } from '@/types/audit'
 import { useSelectedBookmark, useAuditReport } from '@/store/hooks'
 import { getCanvasDimensions, normalisePosition } from './wireframeLayout'
 import { VisualCard } from './VisualCard'
+import { typeHasAxis } from '@/shared/utils/bookmarkType'
 
 interface WireframeCanvasProps {
   pages: PageLayout[]
@@ -26,8 +27,8 @@ export function WireframeCanvas({ pages, selectedPageId }: WireframeCanvasProps)
   const selectedBookmark =
     auditReport?.bookmarks.find((b) => b.id === selectedBookmarkId) ?? null
   const isBookmarkActive = Boolean(selectedBookmark)
-  const isDataType = selectedBookmark?.type === 'data' || selectedBookmark?.type === 'mixed'
-  const isDisplayType = selectedBookmark?.type === 'display' || selectedBookmark?.type === 'mixed'
+  const isDataType = selectedBookmark !== null && typeHasAxis(selectedBookmark.type, 'data')
+  const isDisplayType = selectedBookmark !== null && typeHasAxis(selectedBookmark.type, 'display')
 
   const hiddenSet = new Set(isBookmarkActive ? selectedBookmark!.hiddenVisualIds : [])
   const targetSet = new Set(isBookmarkActive ? selectedBookmark!.affectedVisualIds : [])

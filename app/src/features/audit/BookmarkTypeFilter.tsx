@@ -1,4 +1,4 @@
-import type { BookmarkType } from '@/types/audit'
+import type { BookmarkAxis } from '@/types/audit'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -8,17 +8,17 @@ import {
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const TYPE_LABELS: Record<BookmarkType, string> = {
-  display: 'Display',
+const AXIS_LABELS: Record<BookmarkAxis, string> = {
   data: 'Data',
-  mixed: 'Mixed',
+  display: 'Display',
+  page: 'Page',
 }
 
-const BOOKMARK_TYPES: BookmarkType[] = ['display', 'data', 'mixed']
+const BOOKMARK_AXES: BookmarkAxis[] = ['data', 'display', 'page']
 
 interface Props {
-  selectedTypes: BookmarkType[]
-  onToggleType: (type: BookmarkType) => void
+  selectedTypes: BookmarkAxis[]
+  onToggleType: (type: BookmarkAxis) => void
 }
 
 export function BookmarkTypeFilter({ selectedTypes, onToggleType }: Props) {
@@ -42,13 +42,13 @@ export function BookmarkTypeFilter({ selectedTypes, onToggleType }: Props) {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        {BOOKMARK_TYPES.map((type) => (
+        {BOOKMARK_AXES.map((axis) => (
           <DropdownMenuCheckboxItem
-            key={type}
-            checked={selectedTypes.includes(type)}
-            onCheckedChange={() => onToggleType(type)}
+            key={axis}
+            checked={selectedTypes.includes(axis)}
+            onCheckedChange={() => onToggleType(axis)}
           >
-            {TYPE_LABELS[type]}
+            {AXIS_LABELS[axis]}
           </DropdownMenuCheckboxItem>
         ))}
       </DropdownMenuContent>

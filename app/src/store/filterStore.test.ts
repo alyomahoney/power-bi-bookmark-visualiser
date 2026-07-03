@@ -42,6 +42,13 @@ describe('filterStore', () => {
     expect(useFilterStore.getState().selectedTypes).toContain('data')
   })
 
+  it('toggleType supports the "page" axis', () => {
+    useFilterStore.getState().toggleType('page')
+    expect(useFilterStore.getState().selectedTypes).toContain('page')
+    useFilterStore.getState().toggleType('page')
+    expect(useFilterStore.getState().selectedTypes).not.toContain('page')
+  })
+
   it('clearFilters resets selectedTypes to empty array', () => {
     useFilterStore.setState({ selectedTypes: ['display', 'data'] })
     useFilterStore.getState().clearFilters()

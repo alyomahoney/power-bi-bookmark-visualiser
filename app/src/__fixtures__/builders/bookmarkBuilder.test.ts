@@ -49,7 +49,7 @@ describe('buildBookmark', () => {
 
   it('withType sets the bookmark type', () => {
     expect(buildBookmark().withType('display').build().type).toBe('display')
-    expect(buildBookmark().withType('mixed').build().type).toBe('mixed')
+    expect(buildBookmark().withType('data-display').build().type).toBe('data-display')
     expect(buildBookmark().withType('data').build().type).toBe('data')
   })
 
