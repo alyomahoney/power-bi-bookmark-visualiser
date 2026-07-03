@@ -54,6 +54,8 @@ export function BookmarkVisualFilter({ visuals, selectedVisualIds, onToggleVisua
       <DropdownMenuTrigger asChild>
         <button
           type="button"
+          title="Filter by visuals on the current page"
+          aria-describedby="visual-filter-scope-hint"
           className={cn(
             'flex items-center gap-1 text-xs rounded-md px-2 py-1',
             'border border-border-subtle bg-bg-elevated text-text-secondary',
@@ -66,6 +68,9 @@ export function BookmarkVisualFilter({ visuals, selectedVisualIds, onToggleVisua
           <ChevronDown className="w-3 h-3" aria-hidden="true" />
         </button>
       </DropdownMenuTrigger>
+      <span id="visual-filter-scope-hint" className="sr-only">
+        Filter by visuals on the current page
+      </span>
       <DropdownMenuContent>
         {sortedVisuals.map((visual) => (
           <DropdownMenuCheckboxItem

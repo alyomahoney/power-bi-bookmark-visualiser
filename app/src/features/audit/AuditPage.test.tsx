@@ -40,7 +40,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   useAuditStore.setState({ auditReport: null, selectedPageId: null })
   useUiStore.setState({ selectedBookmarkId: null })
-  useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIds: [] })
+  useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIdsByPage: {} })
 })
 
 describe('AuditPage — session hydration', () => {
@@ -477,7 +477,7 @@ describe('AuditPage — wireframe canvas', () => {
 
 describe('AuditPage — bookmark search', () => {
   beforeEach(() => {
-    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIds: [] })
+    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIdsByPage: {} })
   })
 
   it('renders the search input in the sidebar', () => {
@@ -544,7 +544,7 @@ describe('AuditPage — bookmark search', () => {
 
 describe('AuditPage — bookmark type filter', () => {
   beforeEach(() => {
-    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIds: [] })
+    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIdsByPage: {} })
   })
 
   it('renders the type filter dropdown trigger in the sidebar', () => {
@@ -659,7 +659,7 @@ describe('AuditPage — bookmark type filter', () => {
 
 describe('AuditPage — visual filter', () => {
   beforeEach(() => {
-    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIds: [] })
+    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIdsByPage: {} })
   })
 
   it('renders the Visual filter trigger when pages has visuals', () => {
@@ -694,6 +694,34 @@ describe('AuditPage — visual filter', () => {
     expect(screen.queryByRole('button', { name: /^visual$/i })).not.toBeInTheDocument()
   })
 
+  it('remembers each page\'s visual selection independently across page switches', async () => {
+    const pageA = makePageLayout(['vis-1'])
+    const pageB = { ...makePageLayout(['vis-9']), pageId: 'page-2', pageDisplayName: 'Page 2' }
+    useAuditStore.setState({
+      auditReport: makeReport({
+        bookmarks: [buildBookmark().build()],
+        pages: [pageA, pageB],
+        activePageId: 'page-1',
+      }),
+    })
+    render(<AuditPage />)
+
+    await userEvent.click(screen.getByRole('button', { name: /^visual$/i }))
+    await userEvent.click(screen.getByRole('menuitemcheckbox', { name: /table/i }))
+    expect(screen.getByText('Visual (1)')).toBeInTheDocument()
+    expect(useFilterStore.getState().selectedVisualIdsByPage['page-1']).toEqual(['vis-1'])
+    await userEvent.keyboard('{Escape}')
+
+    await userEvent.click(screen.getByRole('tab', { name: 'Page 2' }))
+    expect(screen.getByRole('button', { name: /^visual$/i })).toBeInTheDocument()
+    expect(screen.queryByText(/^visual \(/i)).not.toBeInTheDocument()
+    expect(useFilterStore.getState().selectedVisualIdsByPage['page-2'] ?? []).toEqual([])
+
+    await userEvent.click(screen.getByRole('tab', { name: 'Page 1' }))
+    expect(screen.getByText('Visual (1)')).toBeInTheDocument()
+    expect(useFilterStore.getState().selectedVisualIdsByPage['page-1']).toEqual(['vis-1'])
+  })
+
   it('filters to bookmarks that include the selected visual id', () => {
     const b1 = buildBookmark().withId('bk-1').withName('Canvas BM').withAffectedVisualIds(['vis-1']).build()
     const b2 = buildBookmark().withId('bk-2').withName('Other BM').withAffectedVisualIds(['vis-2']).build()
@@ -704,7 +732,7 @@ describe('AuditPage — visual filter', () => {
         activePageId: 'page-1',
       }),
     })
-    useFilterStore.setState({ selectedVisualIds: ['vis-1'] })
+    useFilterStore.setState({ selectedVisualIdsByPage: { 'page-1': ['vis-1'] } })
     render(<AuditPage />)
     expect(screen.getByText('Canvas BM')).toBeInTheDocument()
     expect(screen.queryByText('Other BM')).not.toBeInTheDocument()
@@ -721,7 +749,7 @@ describe('AuditPage — visual filter', () => {
         activePageId: 'page-1',
       }),
     })
-    useFilterStore.setState({ selectedVisualIds: ['vis-1', 'vis-2'] })
+    useFilterStore.setState({ selectedVisualIdsByPage: { 'page-1': ['vis-1', 'vis-2'] } })
     render(<AuditPage />)
     expect(screen.getByText('BM One')).toBeInTheDocument()
     expect(screen.getByText('BM Two')).toBeInTheDocument()
@@ -738,7 +766,7 @@ describe('AuditPage — visual filter', () => {
         activePageId: 'page-1',
       }),
     })
-    useFilterStore.setState({ selectedTypes: ['display'], selectedVisualIds: ['vis-1'] })
+    useFilterStore.setState({ selectedTypes: ['display'], selectedVisualIdsByPage: { 'page-1': ['vis-1'] } })
     render(<AuditPage />)
     expect(screen.getByText('Display+Vis1')).toBeInTheDocument()
     expect(screen.queryByText('Data+Vis1')).not.toBeInTheDocument()
@@ -752,7 +780,7 @@ describe('AuditPage — visual filter', () => {
         activePageId: 'page-1',
       }),
     })
-    useFilterStore.setState({ selectedVisualIds: ['vis-1'] })
+    useFilterStore.setState({ selectedVisualIdsByPage: { 'page-1': ['vis-1'] } })
     render(<AuditPage />)
     expect(screen.getByRole('button', { name: /^clear filters$/i })).toBeInTheDocument()
   })
@@ -765,7 +793,7 @@ describe('AuditPage — visual filter', () => {
         activePageId: 'page-1',
       }),
     })
-    useFilterStore.setState({ selectedVisualIds: ['vis-2'] })
+    useFilterStore.setState({ selectedVisualIdsByPage: { 'page-1': ['vis-2'] } })
     render(<AuditPage />)
     expect(screen.getByText('No bookmarks match these filters')).toBeInTheDocument()
   })
@@ -780,7 +808,7 @@ describe('AuditPage — visual filter', () => {
         activePageId: 'page-1',
       }),
     })
-    useFilterStore.setState({ searchQuery: 'sales', selectedVisualIds: ['vis-1'] })
+    useFilterStore.setState({ searchQuery: 'sales', selectedVisualIdsByPage: { 'page-1': ['vis-1'] } })
     render(<AuditPage />)
     expect(screen.getByText('Sales BM')).toBeInTheDocument()
     expect(screen.queryByText('Cost BM')).not.toBeInTheDocument()
@@ -843,7 +871,7 @@ describe('AuditPage — skip navigation link', () => {
 
 describe('AuditPage — bookmark grouping sections', () => {
   beforeEach(() => {
-    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIds: [] })
+    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIdsByPage: {} })
   })
 
   it('renders "All Visuals" section header when at least one bookmark has applyOnlyToTargetVisuals: false', () => {
@@ -953,7 +981,7 @@ describe('AuditPage — reset to default button', () => {
     vi.clearAllMocks()
     useAuditStore.setState({ auditReport: null })
     useUiStore.setState({ selectedBookmarkId: null })
-    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIds: [] })
+    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIdsByPage: {} })
   })
 
   it('renders "Reset to Default" button when pages has visuals', () => {

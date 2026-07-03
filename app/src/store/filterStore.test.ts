@@ -2,7 +2,7 @@ import { useFilterStore } from '@/store/filterStore'
 
 describe('filterStore', () => {
   beforeEach(() => {
-    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIds: [] })
+    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIdsByPage: {} })
   })
 
   it('has empty searchQuery by default', () => {
@@ -55,24 +55,42 @@ describe('filterStore', () => {
     expect(useFilterStore.getState().selectedTypes).toEqual([])
   })
 
-  it('has empty selectedVisualIds by default', () => {
-    expect(useFilterStore.getState().selectedVisualIds).toEqual([])
+  it('has empty selectedVisualIdsByPage by default', () => {
+    expect(useFilterStore.getState().selectedVisualIdsByPage).toEqual({})
   })
 
-  it('toggleVisual adds an id when not selected', () => {
-    useFilterStore.getState().toggleVisual('visual-1')
-    expect(useFilterStore.getState().selectedVisualIds).toContain('visual-1')
+  it('toggleVisual adds an id under the given page', () => {
+    useFilterStore.getState().toggleVisual('page-1', 'visual-1')
+    expect(useFilterStore.getState().selectedVisualIdsByPage['page-1']).toContain('visual-1')
   })
 
-  it('toggleVisual removes an id when already selected', () => {
-    useFilterStore.setState({ selectedVisualIds: ['visual-1'] })
-    useFilterStore.getState().toggleVisual('visual-1')
-    expect(useFilterStore.getState().selectedVisualIds).not.toContain('visual-1')
+  it('toggleVisual removes an id when already selected on that page', () => {
+    useFilterStore.setState({ selectedVisualIdsByPage: { 'page-1': ['visual-1'] } })
+    useFilterStore.getState().toggleVisual('page-1', 'visual-1')
+    expect(useFilterStore.getState().selectedVisualIdsByPage['page-1']).not.toContain('visual-1')
   })
 
-  it('clearFilters resets selectedVisualIds to empty array', () => {
-    useFilterStore.setState({ selectedVisualIds: ['visual-1', 'visual-2'] })
+  it('toggleVisual keeps selections on different pages independent', () => {
+    useFilterStore.getState().toggleVisual('page-1', 'visual-1')
+    useFilterStore.getState().toggleVisual('page-2', 'visual-2')
+    expect(useFilterStore.getState().selectedVisualIdsByPage['page-1']).toEqual(['visual-1'])
+    expect(useFilterStore.getState().selectedVisualIdsByPage['page-2']).toEqual(['visual-2'])
+  })
+
+  it('toggling the same visual id on two different pages does not cross-contaminate', () => {
+    useFilterStore.getState().toggleVisual('page-1', 'visual-1')
+    useFilterStore.getState().toggleVisual('page-2', 'visual-1')
+    expect(useFilterStore.getState().selectedVisualIdsByPage['page-1']).toEqual(['visual-1'])
+    expect(useFilterStore.getState().selectedVisualIdsByPage['page-2']).toEqual(['visual-1'])
+
+    useFilterStore.getState().toggleVisual('page-1', 'visual-1')
+    expect(useFilterStore.getState().selectedVisualIdsByPage['page-1']).toEqual([])
+    expect(useFilterStore.getState().selectedVisualIdsByPage['page-2']).toEqual(['visual-1'])
+  })
+
+  it('clearFilters resets selectedVisualIdsByPage to an empty map', () => {
+    useFilterStore.setState({ selectedVisualIdsByPage: { 'page-1': ['visual-1'], 'page-2': ['visual-2'] } })
     useFilterStore.getState().clearFilters()
-    expect(useFilterStore.getState().selectedVisualIds).toEqual([])
+    expect(useFilterStore.getState().selectedVisualIdsByPage).toEqual({})
   })
 })

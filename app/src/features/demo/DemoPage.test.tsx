@@ -53,7 +53,7 @@ describe('DemoPage', () => {
     mockNavigate.mockReset()
     useAuditStore.setState({ auditReport: sampleData as AuditReport, selectedPageId: null })
     useDemoStore.setState({ isDemoMode: false, loadDemoReport: vi.fn(), exitDemoMode: vi.fn() })
-    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIds: [] })
+    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIdsByPage: {} })
   })
 
   afterEach(() => {
@@ -124,7 +124,7 @@ describe('DemoPage', () => {
 describe('DemoPage — bookmark type filter', () => {
   beforeEach(() => {
     useDemoStore.setState({ isDemoMode: false, loadDemoReport: vi.fn(), exitDemoMode: vi.fn() })
-    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIds: [] })
+    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIdsByPage: {} })
   })
 
   afterEach(() => {
@@ -144,11 +144,44 @@ describe('DemoPage — bookmark type filter', () => {
   })
 })
 
+describe('DemoPage — visual filter is scoped per page', () => {
+  beforeEach(() => {
+    useDemoStore.setState({ isDemoMode: false, loadDemoReport: vi.fn(), exitDemoMode: vi.fn() })
+    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIdsByPage: {} })
+  })
+
+  afterEach(() => {
+    useAuditStore.setState({ auditReport: null })
+  })
+
+  it("does not apply page 1's visual selection to page 2's bookmark list", async () => {
+    const b1 = buildBookmark().withId('bk-1').withName('Page1 BM').withAffectedVisualIds(['vis-1']).build()
+    const b2 = buildBookmark().withId('bk-2').withName('Page2 BM').withAffectedVisualIds(['vis-2']).build()
+    const report = makeReport({
+      bookmarks: [b1, b2],
+      pages: [
+        { pageId: 'page-1', pageDisplayName: 'Overview', canvasWidth: 1280, canvasHeight: 720, visuals: [{ id: 'vis-1', visualType: 'tableEx', position: { x: 0, y: 0, width: 100, height: 100 } }] },
+        { pageId: 'page-2', pageDisplayName: 'Detail', canvasWidth: 1280, canvasHeight: 720, visuals: [{ id: 'vis-2', visualType: 'tableEx', position: { x: 0, y: 0, width: 100, height: 100 } }] },
+      ],
+      activePageId: 'page-1',
+    })
+    useAuditStore.setState({ auditReport: report, selectedPageId: 'page-1' })
+    useFilterStore.setState({ selectedVisualIdsByPage: { 'page-1': ['vis-1'] } })
+    render(<DemoPage />)
+
+    expect(screen.getByText('Page1 BM')).toBeInTheDocument()
+    expect(screen.queryByText('Page2 BM')).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('tab', { name: 'Detail' }))
+    expect(screen.getByText('Page2 BM')).toBeInTheDocument()
+  })
+})
+
 describe('DemoPage — skip navigation link', () => {
   beforeEach(() => {
     useAuditStore.setState({ auditReport: sampleData as AuditReport })
     useDemoStore.setState({ isDemoMode: false, loadDemoReport: vi.fn(), exitDemoMode: vi.fn() })
-    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIds: [] })
+    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIdsByPage: {} })
   })
 
   afterEach(() => {
@@ -201,7 +234,7 @@ describe('DemoPage — bookmark grouping sections', () => {
   beforeEach(() => {
     useAuditStore.setState({ auditReport: sampleData as AuditReport })
     useDemoStore.setState({ isDemoMode: false, loadDemoReport: vi.fn(), exitDemoMode: vi.fn() })
-    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIds: [] })
+    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIdsByPage: {} })
   })
 
   afterEach(() => {
@@ -223,7 +256,7 @@ describe('DemoPage — reset to default button', () => {
   beforeEach(() => {
     useAuditStore.setState({ auditReport: sampleData as AuditReport })
     useDemoStore.setState({ isDemoMode: false, loadDemoReport: vi.fn(), exitDemoMode: vi.fn() })
-    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIds: [] })
+    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIdsByPage: {} })
     useUiStore.setState({ selectedBookmarkId: null })
   })
 
@@ -260,7 +293,7 @@ describe('DemoPage — bookmark auto-navigation', () => {
   beforeEach(() => {
     mockNavigate.mockReset()
     useDemoStore.setState({ isDemoMode: false, loadDemoReport: vi.fn(), exitDemoMode: vi.fn() })
-    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIds: [] })
+    useFilterStore.setState({ searchQuery: '', selectedTypes: [], selectedVisualIdsByPage: {} })
     useUiStore.setState({ selectedBookmarkId: null })
     useAuditStore.setState({ auditReport: null, selectedPageId: null })
   })

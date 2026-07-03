@@ -4,17 +4,17 @@ import type { BookmarkAxis } from '@/types/audit'
 interface FilterState {
   searchQuery: string
   selectedTypes: BookmarkAxis[]
-  selectedVisualIds: string[]
+  selectedVisualIdsByPage: Record<string, string[]>
   setSearchQuery: (query: string) => void
   toggleType: (type: BookmarkAxis) => void
-  toggleVisual: (id: string) => void
+  toggleVisual: (pageId: string, id: string) => void
   clearFilters: () => void
 }
 
 export const useFilterStore = create<FilterState>((set) => ({
   searchQuery: '',
   selectedTypes: [],
-  selectedVisualIds: [],
+  selectedVisualIdsByPage: {},
   setSearchQuery: (query) => set({ searchQuery: query }),
   toggleType: (type) =>
     set((state) => ({
@@ -22,11 +22,17 @@ export const useFilterStore = create<FilterState>((set) => ({
         ? state.selectedTypes.filter((t) => t !== type)
         : [...state.selectedTypes, type],
     })),
-  toggleVisual: (id) =>
-    set((state) => ({
-      selectedVisualIds: state.selectedVisualIds.includes(id)
-        ? state.selectedVisualIds.filter((v) => v !== id)
-        : [...state.selectedVisualIds, id],
-    })),
-  clearFilters: () => set({ searchQuery: '', selectedTypes: [], selectedVisualIds: [] }),
+  toggleVisual: (pageId, id) =>
+    set((state) => {
+      const current = state.selectedVisualIdsByPage[pageId] ?? []
+      return {
+        selectedVisualIdsByPage: {
+          ...state.selectedVisualIdsByPage,
+          [pageId]: current.includes(id)
+            ? current.filter((v) => v !== id)
+            : [...current, id],
+        },
+      }
+    }),
+  clearFilters: () => set({ searchQuery: '', selectedTypes: [], selectedVisualIdsByPage: {} }),
 }))

@@ -29,10 +29,16 @@ export default function AuditPage() {
   const clearFilters = useClearFilters()
   const selectedTypes = useSelectedTypes()
   const toggleType = useToggleType()
-  const selectedVisualIds = useSelectedVisualIds()
-  const toggleVisual = useToggleVisual()
   const exitDemoMode = useExitDemoMode()
   const effectivePageId = useEffectivePageId()
+  const activePageLayout = useActivePageLayout()
+  // Keys the per-page visual filter to the page actually rendered, not the raw
+  // effectivePageId — they can diverge if it references a page that failed to
+  // parse or was removed, in which case activePageLayout falls back to pages[0].
+  const resolvedVisualFilterPageId = activePageLayout?.pageId ?? effectivePageId
+  const selectedVisualIds = useSelectedVisualIds(resolvedVisualFilterPageId)
+  const toggleVisualForPage = useToggleVisual()
+  const toggleVisual = (id: string) => toggleVisualForPage(resolvedVisualFilterPageId, id)
   const setSelectedPageId = useSetSelectedPageId()
 
   useEffect(() => {
@@ -104,7 +110,6 @@ export default function AuditPage() {
     return result
   }, [auditReport?.bookmarks, searchQuery, selectedTypes, selectedVisualIds])
 
-  const activePageLayout = useActivePageLayout()
   const handleSelectBookmark = useSelectBookmarkWithNavigation()
 
   if (!auditReport) return null

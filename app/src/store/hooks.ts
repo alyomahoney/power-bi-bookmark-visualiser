@@ -3,6 +3,8 @@ import { useAuditStore } from '@/store/auditStore'
 import { useFilterStore } from '@/store/filterStore'
 import { useDemoStore } from '@/store/demoStore'
 
+const EMPTY_VISUAL_IDS = Object.freeze([] as string[]) as string[]
+
 export function useTheme() {
   const theme = useUiStore((state) => state.theme)
   const toggleTheme = useUiStore((state) => state.toggleTheme)
@@ -89,8 +91,8 @@ export function useToggleType() {
   return useFilterStore((state) => state.toggleType)
 }
 
-export function useSelectedVisualIds() {
-  return useFilterStore((state) => state.selectedVisualIds)
+export function useSelectedVisualIds(pageId: string) {
+  return useFilterStore((state) => state.selectedVisualIdsByPage[pageId] ?? EMPTY_VISUAL_IDS)
 }
 
 export function useToggleVisual() {
