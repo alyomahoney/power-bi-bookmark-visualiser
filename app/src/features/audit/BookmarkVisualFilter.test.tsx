@@ -92,6 +92,19 @@ describe('BookmarkVisualFilter', () => {
     expect(screen.getByRole('menuitemcheckbox', { name: 'myCustomViz' })).toBeInTheDocument()
   })
 
+  it('keeps the dropdown open after clicking a checkbox item', async () => {
+    render(
+      <BookmarkVisualFilter
+        visuals={visuals}
+        selectedVisualIds={[]}
+        onToggleVisual={vi.fn()}
+      />
+    )
+    await userEvent.click(screen.getByRole('button', { name: /visual/i }))
+    await userEvent.click(screen.getByRole('menuitemcheckbox', { name: /bar chart/i }))
+    expect(screen.getByRole('menuitemcheckbox', { name: /table/i })).toBeInTheDocument()
+  })
+
   it('disambiguates duplicate visual types with #N suffix', async () => {
     const dupVisuals = [
       buildVisual('v-a', 'clusteredBarChart', 1),

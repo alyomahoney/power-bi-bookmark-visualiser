@@ -40,4 +40,22 @@ describe('BookmarkTypeFilter', () => {
     expect(screen.getByRole('menuitemcheckbox', { name: /display/i })).toHaveAttribute('aria-checked', 'true')
     expect(screen.getByRole('menuitemcheckbox', { name: /data/i })).toHaveAttribute('aria-checked', 'false')
   })
+
+  it('keeps the dropdown open after clicking a checkbox item', async () => {
+    render(<BookmarkTypeFilter selectedTypes={[]} onToggleType={vi.fn()} />)
+    await userEvent.click(screen.getByRole('button', { name: /type/i }))
+    await userEvent.click(screen.getByRole('menuitemcheckbox', { name: /display/i }))
+    expect(screen.getByRole('menuitemcheckbox', { name: /data/i })).toBeInTheDocument()
+    expect(screen.getByRole('menuitemcheckbox', { name: /page/i })).toBeInTheDocument()
+  })
+
+  it('allows checking multiple boxes in one open dropdown session', async () => {
+    const onToggleType = vi.fn()
+    render(<BookmarkTypeFilter selectedTypes={[]} onToggleType={onToggleType} />)
+    await userEvent.click(screen.getByRole('button', { name: /type/i }))
+    await userEvent.click(screen.getByRole('menuitemcheckbox', { name: /display/i }))
+    await userEvent.click(screen.getByRole('menuitemcheckbox', { name: /data/i }))
+    expect(onToggleType).toHaveBeenNthCalledWith(1, 'display')
+    expect(onToggleType).toHaveBeenNthCalledWith(2, 'data')
+  })
 })
