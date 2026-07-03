@@ -37,6 +37,19 @@ export const VISUAL_TYPE_CATEGORY: Record<string, VisualCategory> = {
   scorecard:            'cards',
   qnaVisual:            'cards',
   aiNarratives:         'cards',
+  lineStackedColumnComboChart:    'charts',
+  lineClusteredColumnComboChart: 'charts',
+  pythonVisual:         'charts',
+  scriptVisual:         'charts',
+  rdlVisual:            'tables',
+  textSlicer:           'slicers',
+  listSlicer:           'slicers',
+  shape:                'cards',
+  image:                'cards',
+  actionButton:         'cards',
+  bookmarkNavigator:    'cards',
+  pageNavigator:        'cards',
+  multiRowCard:         'cards',
 }
 
 export const VISUAL_DISPLAY_NAME: Record<string, string> = {
@@ -74,6 +87,19 @@ export const VISUAL_DISPLAY_NAME: Record<string, string> = {
   scorecard:            'Goals',
   qnaVisual:            'Q&A',
   aiNarratives:         'Smart Narrative',
+  lineStackedColumnComboChart:    'Line & Stacked Column',
+  lineClusteredColumnComboChart: 'Line & Clustered Column',
+  pythonVisual:         'Python Visual',
+  scriptVisual:         'R Visual',
+  rdlVisual:            'Paginated Report',
+  textSlicer:           'Text Slicer',
+  listSlicer:           'List Slicer',
+  shape:                'Shape',
+  image:                'Image',
+  actionButton:         'Button',
+  bookmarkNavigator:    'Bookmark Nav',
+  pageNavigator:        'Page Nav',
+  multiRowCard:         'Multi-Row Card',
 }
 
 export function getVisualCategory(visualType: string): VisualCategory {
@@ -83,6 +109,8 @@ export function getVisualCategory(visualType: string): VisualCategory {
 }
 
 export function getVisualDisplayName(visualType: string): string {
+  if (/^PowerApps_PBI_CV_/.test(visualType)) return 'Power Apps'
+  if (/^FlowVisual_/.test(visualType))        return 'Power Automate'
   return VISUAL_DISPLAY_NAME[visualType] ?? 'Unknown Visual'
 }
 
@@ -416,6 +444,117 @@ const SmartNarrativeIcon: VisualIcon = ({ x, y, w, h }) => {
   )
 }
 
+const ComboIcon: VisualIcon = ({ x, y, w, h }) => {
+  const base = y + h * 0.44; const cx = x + w / 2; const sp = w * 0.18
+  return (
+    <>
+      <line x1={cx - sp} y1={base} x2={cx - sp} y2={base - h * 0.18} stroke={S} strokeWidth={0.5} />
+      <line x1={cx}      y1={base} x2={cx}      y2={base - h * 0.26} stroke={S} strokeWidth={0.5} />
+      <line x1={cx + sp} y1={base} x2={cx + sp} y2={base - h * 0.14} stroke={S} strokeWidth={0.5} />
+      <path
+        d={`M${cx - sp * 1.6},${base - h * 0.3} L${cx - sp * 0.4},${base - h * 0.36} L${cx + sp * 0.6},${base - h * 0.2} L${cx + sp * 1.8},${base - h * 0.4}`}
+        stroke={S} strokeWidth={sw} fill="none"
+      />
+    </>
+  )
+}
+
+const ScriptIcon: VisualIcon = ({ x, y, w, h }) => {
+  const cx = x + w / 2; const cy = y + h * 0.2; const s = Math.min(w, h) * 0.12
+  return (
+    <>
+      <path d={`M${cx - s * 1.6},${cy - s} L${cx - s * 2.6},${cy} L${cx - s * 1.6},${cy + s}`} stroke={S} strokeWidth={sw} fill="none" />
+      <path d={`M${cx + s * 1.6},${cy - s} L${cx + s * 2.6},${cy} L${cx + s * 1.6},${cy + s}`} stroke={S} strokeWidth={sw} fill="none" />
+      <line x1={cx - s * 0.4} y1={cy + s * 1.3} x2={cx + s * 0.4} y2={cy - s * 1.3} stroke={S} strokeWidth={sw} />
+    </>
+  )
+}
+
+const PaginatedReportIcon: VisualIcon = ({ x, y, w, h }) => {
+  const ix = x + w * 0.32; const iy = y + h * 0.06; const iw = w * 0.36; const ih = h * 0.34
+  return (
+    <>
+      <path d={`M${ix},${iy} L${ix + iw},${iy} L${ix + iw},${iy + ih} L${ix},${iy + ih} Z`} stroke={S} strokeWidth={sw} fill="none" />
+      <line x1={ix + iw * 0.15} y1={iy + ih * 0.25} x2={ix + iw * 0.85} y2={iy + ih * 0.25} stroke={S} strokeWidth={0.25} />
+      <line x1={ix + iw * 0.15} y1={iy + ih * 0.5}  x2={ix + iw * 0.85} y2={iy + ih * 0.5}  stroke={S} strokeWidth={0.25} />
+      <line x1={ix + iw * 0.15} y1={iy + ih * 0.75} x2={ix + iw * 0.6}  y2={iy + ih * 0.75} stroke={S} strokeWidth={0.25} />
+    </>
+  )
+}
+
+const TextSlicerIcon: VisualIcon = ({ x, y, w, h }) => {
+  const ix = x + w * 0.2; const iy = y + h * 0.15; const iw = w * 0.6; const ih = h * 0.12
+  return (
+    <>
+      <path d={`M${ix},${iy} L${ix + iw},${iy} L${ix + iw},${iy + ih} L${ix},${iy + ih} Z`} stroke={S} strokeWidth={sw} fill="none" />
+      <line x1={ix + iw * 0.08} y1={iy + ih * 0.2} x2={ix + iw * 0.08} y2={iy + ih * 0.8} stroke={S} strokeWidth={0.5} />
+    </>
+  )
+}
+
+const ShapeIcon: VisualIcon = ({ x, y, w, h }) => {
+  const ix = x + w * 0.28; const iy = y + h * 0.08; const iw = w * 0.44; const ih = h * 0.3
+  return (
+    <path d={`M${ix},${iy} L${ix + iw},${iy} L${ix + iw},${iy + ih} L${ix},${iy + ih} Z`} stroke={S} strokeWidth={sw} fill="none" />
+  )
+}
+
+const ImageIcon: VisualIcon = ({ x, y, w, h }) => {
+  const ix = x + w * 0.25; const iy = y + h * 0.06; const iw = w * 0.5; const ih = h * 0.32
+  const sunCx = ix + iw * 0.22; const sunCy = iy + ih * 0.28; const sunR = Math.min(w, h) * 0.035
+  return (
+    <>
+      <path d={`M${ix},${iy} L${ix + iw},${iy} L${ix + iw},${iy + ih} L${ix},${iy + ih} Z`} stroke={S} strokeWidth={sw} fill="none" />
+      <circle cx={sunCx} cy={sunCy} r={sunR} fill={S} />
+      <path
+        d={`M${ix},${iy + ih} L${ix + iw * 0.4},${iy + ih * 0.45} L${ix + iw * 0.65},${iy + ih * 0.7} L${ix + iw * 0.85},${iy + ih * 0.4} L${ix + iw},${iy + ih}`}
+        stroke={S} strokeWidth={sw} fill="none"
+      />
+    </>
+  )
+}
+
+const ActionButtonIcon: VisualIcon = ({ x, y, w, h }) => {
+  const ix = x + w * 0.3; const iy = y + h * 0.12; const iw = w * 0.4; const ih = h * 0.18
+  const cx = ix + iw / 2; const cy = iy + ih / 2
+  return (
+    <>
+      <path d={`M${ix},${iy} L${ix + iw},${iy} L${ix + iw},${iy + ih} L${ix},${iy + ih} Z`} stroke={S} strokeWidth={sw} fill="none" />
+      <path d={`M${cx - ih * 0.15},${cy - ih * 0.22} L${cx + ih * 0.25},${cy} L${cx - ih * 0.15},${cy + ih * 0.22} Z`} fill={S} />
+    </>
+  )
+}
+
+const BookmarkNavigatorIcon: VisualIcon = ({ x, y, w, h }) => {
+  const iy = y + h * 0.18; const ih = h * 0.12
+  return (
+    <>
+      {[0.22, 0.42, 0.62].map((f, i) => (
+        <path
+          key={f}
+          d={`M${x + w * f},${iy} L${x + w * (f + 0.14)},${iy} L${x + w * (f + 0.14)},${iy + ih} L${x + w * f},${iy + ih} Z`}
+          stroke={S} strokeWidth={sw} fill={i === 0 ? S : 'none'} fillOpacity={i === 0 ? 0.3 : 1}
+        />
+      ))}
+    </>
+  )
+}
+
+const PageNavigatorIcon: VisualIcon = ({ x, y, w, h }) => {
+  const iy = y + h * 0.1; const ih = h * 0.26; const iw = w * 0.16
+  return (
+    <>
+      {[0.22, 0.42, 0.62].map((f) => (
+        <path
+          key={f}
+          d={`M${x + w * f},${iy} L${x + w * f + iw},${iy} L${x + w * f + iw},${iy + ih} L${x + w * f},${iy + ih} Z`}
+          stroke={S} strokeWidth={sw} fill="none"
+        />
+      ))}
+    </>
+  )
+}
+
 export const PLACEHOLDER_ICON: VisualIcon = ({ x, y, w, h }) => {
   const cx = x + w / 2; const cy = y + h * 0.22; const r = Math.min(w, h) * 0.1
   return (
@@ -464,6 +603,19 @@ export const VISUAL_ICON: Record<string, VisualIcon> = {
   scorecard:                       GoalsIcon,
   qnaVisual:                       QnAIcon,
   aiNarratives:                    SmartNarrativeIcon,
+  lineStackedColumnComboChart:     ComboIcon,
+  lineClusteredColumnComboChart:   ComboIcon,
+  pythonVisual:                    ScriptIcon,
+  scriptVisual:                    ScriptIcon,
+  rdlVisual:                       PaginatedReportIcon,
+  textSlicer:                      TextSlicerIcon,
+  listSlicer:                      ButtonSlicerIcon,
+  shape:                           ShapeIcon,
+  image:                           ImageIcon,
+  actionButton:                    ActionButtonIcon,
+  bookmarkNavigator:               BookmarkNavigatorIcon,
+  pageNavigator:                   PageNavigatorIcon,
+  multiRowCard:                    CardIcon,
 }
 
 export function getVisualIcon(visualType: string): VisualIcon {

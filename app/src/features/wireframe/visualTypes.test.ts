@@ -14,7 +14,9 @@ describe('getVisualCategory', () => {
              'lineChart', 'areaChart', 'waterfallChart', 'funnel', 'scatterChart',
              'hundredPercentStackedBarChart', 'hundredPercentStackedColumnChart',
              'stackedAreaChart', 'ribbonChart', 'map', 'filledMap', 'azureMap',
-             'esriVisual', 'decompositionTreeVisual', 'keyDriversVisual'])(
+             'esriVisual', 'decompositionTreeVisual', 'keyDriversVisual',
+             'lineStackedColumnComboChart', 'lineClusteredColumnComboChart',
+             'pythonVisual', 'scriptVisual'])(
       '%s → charts',
       (type) => expect(getVisualCategory(type)).toBe('charts')
     )
@@ -28,21 +30,22 @@ describe('getVisualCategory', () => {
   })
 
   describe('cards', () => {
-    it.each(['cardVisual', 'card', 'kpi', 'gauge', 'textbox', 'scorecard', 'qnaVisual', 'aiNarratives'])(
+    it.each(['cardVisual', 'card', 'kpi', 'gauge', 'textbox', 'scorecard', 'qnaVisual', 'aiNarratives',
+             'shape', 'image', 'actionButton', 'bookmarkNavigator', 'pageNavigator', 'multiRowCard'])(
       '%s → cards',
       (type) => expect(getVisualCategory(type)).toBe('cards')
     )
   })
 
   describe('tables', () => {
-    it.each(['tableEx', 'pivotTable'])(
+    it.each(['tableEx', 'pivotTable', 'rdlVisual'])(
       '%s → tables',
       (type) => expect(getVisualCategory(type)).toBe('tables')
     )
   })
 
   describe('slicers', () => {
-    it.each(['slicer', 'advancedSlicerVisual'])(
+    it.each(['slicer', 'advancedSlicerVisual', 'textSlicer', 'listSlicer'])(
       '%s → slicers',
       (type) => expect(getVisualCategory(type)).toBe('slicers')
     )
@@ -66,9 +69,9 @@ describe('getVisualCategory', () => {
     })
   })
 
-  it('covers all 34 entries in VISUAL_TYPE_CATEGORY without placeholder', () => {
+  it('covers all 47 entries in VISUAL_TYPE_CATEGORY without placeholder', () => {
     const supportedTypes = Object.keys(VISUAL_TYPE_CATEGORY)
-    expect(supportedTypes).toHaveLength(34)
+    expect(supportedTypes).toHaveLength(47)
     for (const type of supportedTypes) {
       expect(getVisualCategory(type)).not.toBe('placeholder')
     }
@@ -158,6 +161,30 @@ describe('getVisualDisplayName', () => {
     expect(getVisualDisplayName('aiNarratives')).toBe('Smart Narrative')
   })
 
+  it('returns Paginated Report for rdlVisual', () => {
+    expect(getVisualDisplayName('rdlVisual')).toBe('Paginated Report')
+  })
+
+  it('returns R Visual for scriptVisual', () => {
+    expect(getVisualDisplayName('scriptVisual')).toBe('R Visual')
+  })
+
+  it('returns Bookmark Nav for bookmarkNavigator', () => {
+    expect(getVisualDisplayName('bookmarkNavigator')).toBe('Bookmark Nav')
+  })
+
+  it('returns Multi-Row Card for multiRowCard', () => {
+    expect(getVisualDisplayName('multiRowCard')).toBe('Multi-Row Card')
+  })
+
+  it('returns Power Apps for a PowerApps_PBI_CV_ GUID-suffixed type', () => {
+    expect(getVisualDisplayName('PowerApps_PBI_CV_abc123def456')).toBe('Power Apps')
+  })
+
+  it('returns Power Automate for a FlowVisual_ GUID-suffixed type', () => {
+    expect(getVisualDisplayName('FlowVisual_xyz789')).toBe('Power Automate')
+  })
+
   it('returns Unknown Visual for any unrecognised type', () => {
     expect(getVisualDisplayName('notAVisualType')).toBe('Unknown Visual')
   })
@@ -166,9 +193,9 @@ describe('getVisualDisplayName', () => {
     expect(getVisualDisplayName('')).toBe('Unknown Visual')
   })
 
-  it('covers all 34 entries in VISUAL_DISPLAY_NAME with correct values', () => {
+  it('covers all 47 entries in VISUAL_DISPLAY_NAME with correct values', () => {
     const mappedTypes = Object.keys(VISUAL_DISPLAY_NAME)
-    expect(mappedTypes).toHaveLength(34)
+    expect(mappedTypes).toHaveLength(47)
     for (const type of mappedTypes) {
       expect(getVisualDisplayName(type)).toBe(VISUAL_DISPLAY_NAME[type])
     }
