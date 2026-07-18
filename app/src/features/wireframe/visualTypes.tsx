@@ -1,6 +1,9 @@
+import { PowerBiIcon } from '@/shared/components/icons/PowerBiIcon'
+import type { PowerBiIconName } from '@/shared/components/icons/PowerBiIcon'
+
 export type VisualCategory = 'charts' | 'pie' | 'cards' | 'tables' | 'slicers' | 'placeholder'
 
-export type VisualIcon = React.FC<{ x: number; y: number; w: number; h: number }>
+export type VisualIcon = React.FC<{ x: number; y: number; size: number }>
 
 export const VISUAL_TYPE_CATEGORY: Record<string, VisualCategory> = {
   clusteredColumnChart: 'charts',
@@ -116,447 +119,124 @@ export function getVisualDisplayName(visualType: string): string {
 
 // ─── Icon components ─────────────────────────────────────────────────────────
 // All icons accept card coords in viewBox space (0–100 range).
-// Use line/path/circle only so existing rect-count tests are unaffected.
 
 const S = 'var(--color-text-secondary)'
 const sw = 0.3
 
-const ColIcon: VisualIcon = ({ x, y, w, h }) => {
-  const base = y + h * 0.44
-  const cx = x + w / 2
-  const sp = w * 0.18
-  return (
-    <>
-      <line x1={cx - sp} y1={base} x2={cx - sp} y2={base - h * 0.2}  stroke={S} strokeWidth={0.5} />
-      <line x1={cx}      y1={base} x2={cx}       y2={base - h * 0.3}  stroke={S} strokeWidth={0.5} />
-      <line x1={cx + sp} y1={base} x2={cx + sp}  y2={base - h * 0.15} stroke={S} strokeWidth={0.5} />
-    </>
-  )
+// Full glyph set comes from the PowerBiIcon component (shared/components/icons) —
+// each registered visual type maps to one of its 47 named glyphs, rendered as a
+// small nested <svg> positioned within the card's icon region.
+const ACCENT = 'var(--color-primary)'
+
+const POWER_BI_ICON_NAME: Record<string, PowerBiIconName> = {
+  clusteredColumnChart:            'clusteredColumn',
+  columnChart:                     'stackedColumn',
+  clusteredBarChart:               'clusteredBar',
+  barChart:                        'stackedBar',
+  lineChart:                       'line',
+  areaChart:                       'area',
+  waterfallChart:                  'waterfall',
+  funnel:                          'funnel',
+  scatterChart:                    'scatter',
+  hundredPercentStackedBarChart:   '100StackedBar',
+  hundredPercentStackedColumnChart: '100StackedColumn',
+  stackedAreaChart:                'stackedArea',
+  ribbonChart:                     'ribbon',
+  pieChart:                        'pie',
+  donutChart:                      'donut',
+  treemap:                         'treemap',
+  cardVisual:                      'card',
+  card:                            'card',
+  kpi:                             'kPI',
+  gauge:                           'gauge',
+  tableEx:                         'table',
+  pivotTable:                      'matrix',
+  slicer:                          'slicer',
+  advancedSlicerVisual:            'buttonSlicer',
+  map:                             'map',
+  filledMap:                       'filledMap',
+  azureMap:                        'azureMap',
+  esriVisual:                      'arcGISMap',
+  decompositionTreeVisual:         'decompositionTree',
+  textbox:                         'textBox',
+  keyDriversVisual:                'keyInfluencers',
+  scorecard:                       'goals',
+  qnaVisual:                       'qandA',
+  aiNarratives:                    'smartNarrative',
+  lineStackedColumnComboChart:     'lineAndStackedColumn',
+  lineClusteredColumnComboChart:   'lineAndClusteredColumn',
+  pythonVisual:                    'pythonVisual',
+  scriptVisual:                    'rVisual',
+  rdlVisual:                       'paginatedReport',
+  textSlicer:                      'textSlicer',
+  listSlicer:                      'listSlicer',
+  shape:                           'shape',
+  image:                           'image',
+  actionButton:                    'button',
+  bookmarkNavigator:               'bookmarkNav',
+  pageNavigator:                   'pageNav',
+  multiRowCard:                    'multiRowCard',
 }
 
-const BarIcon: VisualIcon = ({ x, y, w, h }) => {
-  const left = x + w * 0.2
-  const cy   = y + h * 0.22
-  const sp   = h * 0.11
-  return (
-    <>
-      <line x1={left} y1={cy - sp} x2={left + w * 0.45} y2={cy - sp} stroke={S} strokeWidth={0.5} />
-      <line x1={left} y1={cy}      x2={left + w * 0.3}  y2={cy}      stroke={S} strokeWidth={0.5} />
-      <line x1={left} y1={cy + sp} x2={left + w * 0.4}  y2={cy + sp} stroke={S} strokeWidth={0.5} />
-    </>
-  )
+// The icon and its label are laid out as a single vertically-centred block
+// within the card, rather than the icon pinned to the top — see
+// computeIconLayout(). LABEL_BLOCK_H approximates the (single-line) label's
+// own visual footprint (independent of card height, since font size is
+// fixed), so short cards shrink or drop the icon before the two ever collide.
+export interface IconLayout {
+  iconX: number
+  iconY: number
+  iconSize: number
+  labelCenterY: number
+  /** Bottom edge of the whole icon+label block — exposed so callers/tests can
+   *  verify vertical centring without hardcoding the internal spacing constants. */
+  blockBottom: number
 }
 
-const LineIcon: VisualIcon = ({ x, y, w, h }) => {
-  const ix = x + w * 0.15; const iy = y + h * 0.38
-  const iw = w * 0.7;       const ih = h * 0.28
-  return (
-    <path
-      d={`M${ix},${iy + ih * 0.5} L${ix + iw * 0.3},${iy + ih * 0.1} L${ix + iw * 0.6},${iy + ih * 0.7} L${ix + iw},${iy}`}
-      stroke={S} strokeWidth={sw} fill="none"
-    />
-  )
+const LABEL_BLOCK_H = 1.5
+const ICON_LABEL_GAP = 0.6
+const CARD_MARGIN = 0.6
+const MIN_ICON_SIZE = 1.6
+
+export function computeIconLayout(x: number, y: number, w: number, h: number, showLabel = true): IconLayout | null {
+  // With the label hidden there's no text block to reserve room for or
+  // stack above — the icon alone gets the full card to center in and can
+  // grow a bit further before it's judged too cramped to bother with.
+  const labelH = showLabel ? LABEL_BLOCK_H : 0
+  const gap = showLabel ? ICON_LABEL_GAP : 0
+  const maxIconSize = showLabel ? Math.min(w * 0.55, h * 0.42) : Math.min(w * 0.6, h * 0.6)
+  const availForIcon = h - CARD_MARGIN * 2 - gap - labelH
+  const iconSize = Math.min(maxIconSize, availForIcon)
+  if (iconSize < MIN_ICON_SIZE) return null
+  const contentH = iconSize + gap + labelH
+  const blockTop = y + (h - contentH) / 2
+  return {
+    iconX: x + w / 2 - iconSize / 2,
+    iconY: blockTop,
+    iconSize,
+    labelCenterY: blockTop + iconSize + ICON_LABEL_GAP + LABEL_BLOCK_H / 2,
+    blockBottom: blockTop + contentH,
+  }
 }
 
-const AreaIcon: VisualIcon = ({ x, y, w, h }) => {
-  const ix = x + w * 0.15; const iw = w * 0.7
-  const ih = h * 0.3;       const iy = y + h * 0.38; const base = iy + ih
-  return (
-    <path
-      d={`M${ix},${base} L${ix},${iy + ih * 0.55} L${ix + iw * 0.35},${iy + ih * 0.1} L${ix + iw * 0.7},${iy + ih * 0.65} L${ix + iw},${iy} L${ix + iw},${base} Z`}
-      stroke={S} strokeWidth={sw} fill={S} fillOpacity={0.2}
-    />
-  )
-}
-
-const WaterfallIcon: VisualIcon = ({ x, y, w, h }) => {
-  const base = y + h * 0.43; const sp = w * 0.16; const cx0 = x + w * 0.18
-  return (
-    <>
-      <line x1={cx0}          y1={base}            x2={cx0}          y2={base - h * 0.2}  stroke={S} strokeWidth={0.5} />
-      <line x1={cx0 + sp}     y1={base - h * 0.1}  x2={cx0 + sp}     y2={base - h * 0.28} stroke={S} strokeWidth={0.5} />
-      <line x1={cx0 + sp * 2} y1={base - h * 0.05} x2={cx0 + sp * 2} y2={base - h * 0.22} stroke={S} strokeWidth={0.5} />
-      <line x1={cx0 + sp * 3} y1={base}            x2={cx0 + sp * 3} y2={base - h * 0.34} stroke={S} strokeWidth={0.5} />
-    </>
-  )
-}
-
-const FunnelIcon: VisualIcon = ({ x, y, w, h }) => {
-  const cx = x + w / 2; const iy = y + h * 0.08; const ih = h * 0.35
-  const tw = w * 0.45;  const bw = w * 0.15
-  return (
-    <path
-      d={`M${cx - tw / 2},${iy} L${cx + tw / 2},${iy} L${cx + bw / 2},${iy + ih} L${cx - bw / 2},${iy + ih} Z`}
-      stroke={S} strokeWidth={sw} fill="none"
-    />
-  )
-}
-
-const ScatterIcon: VisualIcon = ({ x, y, w, h }) => {
-  const cx = x + w / 2; const cy = y + h * 0.22; const r = 0.3
-  return (
-    <>
-      <circle cx={cx - w * 0.2}  cy={cy + h * 0.1}  r={r} fill={S} />
-      <circle cx={cx}            cy={cy - h * 0.05}  r={r} fill={S} />
-      <circle cx={cx + w * 0.2}  cy={cy + h * 0.12}  r={r} fill={S} />
-      <circle cx={cx - w * 0.08} cy={cy - h * 0.13}  r={r} fill={S} />
-    </>
-  )
-}
-
-const StackedAreaIcon: VisualIcon = ({ x, y, w, h }) => {
-  const ix = x + w * 0.15; const iw = w * 0.7
-  const ih = h * 0.3;       const iy = y + h * 0.38; const base = iy + ih
-  return (
-    <>
-      <path
-        d={`M${ix},${base} L${ix},${iy + ih * 0.6} L${ix + iw * 0.5},${iy + ih * 0.3} L${ix + iw},${iy + ih * 0.5} L${ix + iw},${base} Z`}
-        stroke={S} strokeWidth={sw} fill={S} fillOpacity={0.15}
+function makePowerBiVisualIcon(name: PowerBiIconName): VisualIcon {
+  return function PowerBiVisualIcon({ x, y, size }) {
+    return (
+      <PowerBiIcon
+        name={name}
+        x={x}
+        y={y}
+        size={size}
+        color={S}
+        accentColor={ACCENT}
+        style={{ overflow: 'visible' }}
       />
-      <path
-        d={`M${ix},${iy + ih * 0.6} L${ix + iw * 0.5},${iy + ih * 0.3} L${ix + iw},${iy + ih * 0.5} L${ix + iw},${iy + ih * 0.1} L${ix + iw * 0.5},${iy} L${ix},${iy + ih * 0.3} Z`}
-        stroke={S} strokeWidth={sw} fill={S} fillOpacity={0.25}
-      />
-    </>
-  )
+    )
+  }
 }
 
-const RibbonIcon: VisualIcon = ({ x, y, w, h }) => {
-  const ix = x + w * 0.15; const iy = y + h * 0.38; const iw = w * 0.7; const ih = h * 0.28
-  return (
-    <path
-      d={`M${ix},${iy + ih * 0.5} C${ix + iw * 0.25},${iy} ${ix + iw * 0.25},${iy + ih} ${ix + iw * 0.5},${iy + ih * 0.5} C${ix + iw * 0.75},${iy} ${ix + iw * 0.75},${iy + ih} ${ix + iw},${iy + ih * 0.5}`}
-      stroke={S} strokeWidth={sw} fill="none"
-    />
-  )
-}
-
-const PieIcon: VisualIcon = ({ x, y, w, h }) => {
-  const cx = x + w / 2; const cy = y + h * 0.22; const r = Math.min(w, h) * 0.18
-  return (
-    <>
-      <path
-        d={`M${cx},${cy} L${cx},${cy - r} A${r},${r},0,1,1,${cx - r * 0.87},${cy + r * 0.5} Z`}
-        stroke={S} strokeWidth={sw} fill={S} fillOpacity={0.2}
-      />
-      <path
-        d={`M${cx},${cy} L${cx - r * 0.87},${cy + r * 0.5} A${r},${r},0,0,1,${cx},${cy - r} Z`}
-        stroke={S} strokeWidth={sw} fill="none"
-      />
-    </>
-  )
-}
-
-const DonutIcon: VisualIcon = ({ x, y, w, h }) => {
-  const cx = x + w / 2; const cy = y + h * 0.22
-  const r = Math.min(w, h) * 0.17; const ri = r * 0.55
-  return (
-    <>
-      <circle cx={cx} cy={cy} r={r}  stroke={S} strokeWidth={sw} fill="none" />
-      <circle cx={cx} cy={cy} r={ri} stroke={S} strokeWidth={sw} fill="none" />
-      <path
-        d={`M${cx},${cy - r} A${r},${r},0,0,1,${cx + r},${cy}`}
-        stroke={S} strokeWidth={sw * 2} fill="none"
-      />
-    </>
-  )
-}
-
-const TreemapIcon: VisualIcon = ({ x, y, w, h }) => {
-  const ix = x + w * 0.15; const iy = y + h * 0.08; const iw = w * 0.7; const ih = h * 0.36
-  const mx = ix + iw * 0.55; const my = iy + ih * 0.45
-  return (
-    <>
-      <path d={`M${ix},${iy} L${ix + iw},${iy} L${ix + iw},${iy + ih} L${ix},${iy + ih} Z`} stroke={S} strokeWidth={sw} fill="none" />
-      <line x1={mx} y1={iy}  x2={mx} y2={iy + ih}  stroke={S} strokeWidth={sw} />
-      <line x1={ix} y1={my}  x2={mx} y2={my}        stroke={S} strokeWidth={sw} />
-    </>
-  )
-}
-
-const CardIcon: VisualIcon = ({ x, y, w, h }) => {
-  const cx = x + w / 2; const cy = y + h * 0.22; const lw = w * 0.5
-  return (
-    <>
-      <line x1={cx - lw / 2}      y1={cy - h * 0.07} x2={cx + lw / 2}       y2={cy - h * 0.07} stroke={S} strokeWidth={0.5} />
-      <line x1={cx - lw * 0.35}   y1={cy + h * 0.08} x2={cx + lw * 0.35}    y2={cy + h * 0.08} stroke={S} strokeWidth={sw} />
-    </>
-  )
-}
-
-const KpiIcon: VisualIcon = ({ x, y, w, h }) => {
-  const cx = x + w / 2; const cy = y + h * 0.22
-  return (
-    <>
-      <line x1={cx - w * 0.2}  y1={cy}            x2={cx + w * 0.2}  y2={cy}            stroke={S} strokeWidth={0.5} />
-      <line x1={cx}             y1={cy - h * 0.14} x2={cx}             y2={cy + h * 0.06} stroke={S} strokeWidth={sw} />
-      <line x1={cx - w * 0.1}  y1={cy - h * 0.08} x2={cx}             y2={cy - h * 0.14} stroke={S} strokeWidth={sw} />
-      <line x1={cx + w * 0.1}  y1={cy - h * 0.08} x2={cx}             y2={cy - h * 0.14} stroke={S} strokeWidth={sw} />
-    </>
-  )
-}
-
-const GaugeIcon: VisualIcon = ({ x, y, w, h }) => {
-  const cx = x + w / 2; const cy = y + h * 0.3; const r = Math.min(w, h) * 0.2
-  return (
-    <>
-      <path d={`M${cx - r},${cy} A${r},${r},0,0,1,${cx + r},${cy}`} stroke={S} strokeWidth={sw} fill="none" />
-      <line x1={cx} y1={cy} x2={cx + r * 0.7} y2={cy - r * 0.7} stroke={S} strokeWidth={sw} />
-    </>
-  )
-}
-
-const TableIcon: VisualIcon = ({ x, y, w, h }) => {
-  const ix = x + w * 0.15; const iy = y + h * 0.08; const iw = w * 0.7; const ih = h * 0.36
-  return (
-    <>
-      <line x1={ix} y1={iy}          x2={ix + iw} y2={iy}          stroke={S} strokeWidth={0.4} />
-      <line x1={ix} y1={iy + ih / 2} x2={ix + iw} y2={iy + ih / 2} stroke={S} strokeWidth={sw} />
-      <line x1={ix} y1={iy + ih}     x2={ix + iw} y2={iy + ih}     stroke={S} strokeWidth={sw} />
-      <line x1={ix}          y1={iy} x2={ix}          y2={iy + ih}  stroke={S} strokeWidth={sw} />
-      <line x1={ix + iw / 2} y1={iy} x2={ix + iw / 2} y2={iy + ih} stroke={S} strokeWidth={sw} />
-      <line x1={ix + iw}     y1={iy} x2={ix + iw}     y2={iy + ih} stroke={S} strokeWidth={sw} />
-    </>
-  )
-}
-
-const MatrixIcon: VisualIcon = ({ x, y, w, h }) => {
-  const ix = x + w * 0.15; const iy = y + h * 0.08; const iw = w * 0.7; const ih = h * 0.36
-  const hh = ih * 0.3
-  return (
-    <>
-      <line x1={ix} y1={iy}       x2={ix + iw} y2={iy}       stroke={S} strokeWidth={0.4} />
-      <line x1={ix} y1={iy + hh}  x2={ix + iw} y2={iy + hh}  stroke={S} strokeWidth={0.4} />
-      <line x1={ix} y1={iy + ih}  x2={ix + iw} y2={iy + ih}  stroke={S} strokeWidth={sw} />
-      <line x1={ix}               y1={iy} x2={ix}               y2={iy + ih} stroke={S} strokeWidth={0.4} />
-      <line x1={ix + iw * 0.35}   y1={iy} x2={ix + iw * 0.35}   y2={iy + ih} stroke={S} strokeWidth={sw} />
-      <line x1={ix + iw}          y1={iy} x2={ix + iw}          y2={iy + ih} stroke={S} strokeWidth={sw} />
-    </>
-  )
-}
-
-const SlicerIcon: VisualIcon = ({ x, y, w, h }) => {
-  const ix = x + w * 0.15; const cy = y + h * 0.22; const iw = w * 0.7
-  return (
-    <>
-      <line x1={ix}               y1={cy}             x2={ix + iw}         y2={cy}             stroke={S} strokeWidth={sw} />
-      <line x1={ix + iw * 0.3}    y1={cy - h * 0.1}   x2={ix + iw * 0.3}   y2={cy + h * 0.1}   stroke={S} strokeWidth={0.5} />
-    </>
-  )
-}
-
-const ButtonSlicerIcon: VisualIcon = ({ x, y, w, h }) => {
-  const ix = x + w * 0.15; const iy = y + h * 0.1; const iw = w * 0.7; const sp = h * 0.13
-  return (
-    <>
-      <line x1={ix} y1={iy}          x2={ix + iw}       y2={iy}          stroke={S} strokeWidth={sw} />
-      <line x1={ix} y1={iy + sp}     x2={ix + iw * 0.8} y2={iy + sp}     stroke={S} strokeWidth={sw} />
-      <line x1={ix} y1={iy + sp * 2} x2={ix + iw * 0.9} y2={iy + sp * 2} stroke={S} strokeWidth={sw} />
-    </>
-  )
-}
-
-const MapIcon: VisualIcon = ({ x, y, w, h }) => {
-  const cx = x + w / 2; const cy = y + h * 0.16; const r = Math.min(w, h) * 0.14
-  return (
-    <>
-      <path
-        d={`M${cx},${cy - r * 1.6} C${cx + r * 1.3},${cy - r * 1.6} ${cx + r * 1.3},${cy + r * 0.2} ${cx},${cy + r * 1.8} C${cx - r * 1.3},${cy + r * 0.2} ${cx - r * 1.3},${cy - r * 1.6} ${cx},${cy - r * 1.6} Z`}
-        stroke={S} strokeWidth={sw} fill="none"
-      />
-      <circle cx={cx} cy={cy - r * 0.5} r={r * 0.45} fill={S} />
-    </>
-  )
-}
-
-const DecompositionTreeIcon: VisualIcon = ({ x, y, w, h }) => {
-  const cx = x + w / 2; const rootY = y + h * 0.14; const childY = rootY + h * 0.2
-  const leftX = cx - w * 0.22; const rightX = cx + w * 0.22
-  return (
-    <>
-      <line x1={cx} y1={rootY} x2={leftX}  y2={childY} stroke={S} strokeWidth={sw} />
-      <line x1={cx} y1={rootY} x2={rightX} y2={childY} stroke={S} strokeWidth={sw} />
-      <circle cx={cx}     cy={rootY}  r={0.5} fill={S} />
-      <circle cx={leftX}  cy={childY} r={0.5} fill={S} />
-      <circle cx={rightX} cy={childY} r={0.5} fill={S} />
-    </>
-  )
-}
-
-const TextboxIcon: VisualIcon = ({ x, y, w, h }) => {
-  const ix = x + w * 0.2; const iw = w * 0.6
-  const iy = y + h * 0.13; const lh = h * 0.09
-  return (
-    <>
-      <line x1={ix} y1={iy}          x2={ix + iw}       y2={iy}          stroke={S} strokeWidth={sw} />
-      <line x1={ix} y1={iy + lh}     x2={ix + iw}       y2={iy + lh}     stroke={S} strokeWidth={sw} />
-      <line x1={ix} y1={iy + lh * 2} x2={ix + iw * 0.6} y2={iy + lh * 2} stroke={S} strokeWidth={sw} />
-    </>
-  )
-}
-
-const KeyDriversIcon: VisualIcon = ({ x, y, w, h }) => {
-  const cx = x + w / 2; const cy = y + h * 0.2; const r = Math.min(w, h) * 0.12
-  return (
-    <>
-      <circle cx={cx} cy={cy} r={r} stroke={S} strokeWidth={sw} fill="none" />
-      <line x1={cx - r * 2.2} y1={cy - r * 1.2} x2={cx - r * 1.1} y2={cy - r * 0.4} stroke={S} strokeWidth={sw} />
-      <line x1={cx + r * 2.2} y1={cy - r * 1.2} x2={cx + r * 1.1} y2={cy - r * 0.4} stroke={S} strokeWidth={sw} />
-      <line x1={cx}           y1={cy + r * 1.8} x2={cx}           y2={cy + r * 0.9} stroke={S} strokeWidth={sw} />
-    </>
-  )
-}
-
-const GoalsIcon: VisualIcon = ({ x, y, w, h }) => {
-  const cx = x + w * 0.38; const topY = y + h * 0.06; const botY = topY + h * 0.32
-  return (
-    <>
-      <line x1={cx} y1={topY} x2={cx} y2={botY} stroke={S} strokeWidth={sw} />
-      <path
-        d={`M${cx},${topY} L${cx + w * 0.22},${topY + h * 0.06} L${cx},${topY + h * 0.12} Z`}
-        stroke={S} strokeWidth={sw} fill={S} fillOpacity={0.3}
-      />
-    </>
-  )
-}
-
-const QnAIcon: VisualIcon = ({ x, y, w, h }) => {
-  const cx = x + w * 0.42; const cy = y + h * 0.16; const r = Math.min(w, h) * 0.1
-  return (
-    <>
-      <circle cx={cx} cy={cy} r={r} stroke={S} strokeWidth={sw} fill="none" />
-      <line x1={cx + r * 0.7} y1={cy + r * 0.7} x2={cx + r * 1.6} y2={cy + r * 1.6} stroke={S} strokeWidth={sw} />
-    </>
-  )
-}
-
-const SmartNarrativeIcon: VisualIcon = ({ x, y, w, h }) => {
-  const ix = x + w * 0.22; const iw = w * 0.56
-  const iy = y + h * 0.16; const lh = h * 0.09
-  const sx = x + w * 0.78; const sy = y + h * 0.1; const sr = Math.min(w, h) * 0.05
-  return (
-    <>
-      <path d={`M${sx},${sy - sr} L${sx},${sy + sr} M${sx - sr},${sy} L${sx + sr},${sy}`} stroke={S} strokeWidth={sw} />
-      <line x1={ix} y1={iy}          x2={ix + iw}       y2={iy}          stroke={S} strokeWidth={sw} />
-      <line x1={ix} y1={iy + lh}     x2={ix + iw}       y2={iy + lh}     stroke={S} strokeWidth={sw} />
-      <line x1={ix} y1={iy + lh * 2} x2={ix + iw * 0.6} y2={iy + lh * 2} stroke={S} strokeWidth={sw} />
-    </>
-  )
-}
-
-const ComboIcon: VisualIcon = ({ x, y, w, h }) => {
-  const base = y + h * 0.44; const cx = x + w / 2; const sp = w * 0.18
-  return (
-    <>
-      <line x1={cx - sp} y1={base} x2={cx - sp} y2={base - h * 0.18} stroke={S} strokeWidth={0.5} />
-      <line x1={cx}      y1={base} x2={cx}      y2={base - h * 0.26} stroke={S} strokeWidth={0.5} />
-      <line x1={cx + sp} y1={base} x2={cx + sp} y2={base - h * 0.14} stroke={S} strokeWidth={0.5} />
-      <path
-        d={`M${cx - sp * 1.6},${base - h * 0.3} L${cx - sp * 0.4},${base - h * 0.36} L${cx + sp * 0.6},${base - h * 0.2} L${cx + sp * 1.8},${base - h * 0.4}`}
-        stroke={S} strokeWidth={sw} fill="none"
-      />
-    </>
-  )
-}
-
-const ScriptIcon: VisualIcon = ({ x, y, w, h }) => {
-  const cx = x + w / 2; const cy = y + h * 0.2; const s = Math.min(w, h) * 0.12
-  return (
-    <>
-      <path d={`M${cx - s * 1.6},${cy - s} L${cx - s * 2.6},${cy} L${cx - s * 1.6},${cy + s}`} stroke={S} strokeWidth={sw} fill="none" />
-      <path d={`M${cx + s * 1.6},${cy - s} L${cx + s * 2.6},${cy} L${cx + s * 1.6},${cy + s}`} stroke={S} strokeWidth={sw} fill="none" />
-      <line x1={cx - s * 0.4} y1={cy + s * 1.3} x2={cx + s * 0.4} y2={cy - s * 1.3} stroke={S} strokeWidth={sw} />
-    </>
-  )
-}
-
-const PaginatedReportIcon: VisualIcon = ({ x, y, w, h }) => {
-  const ix = x + w * 0.32; const iy = y + h * 0.06; const iw = w * 0.36; const ih = h * 0.34
-  return (
-    <>
-      <path d={`M${ix},${iy} L${ix + iw},${iy} L${ix + iw},${iy + ih} L${ix},${iy + ih} Z`} stroke={S} strokeWidth={sw} fill="none" />
-      <line x1={ix + iw * 0.15} y1={iy + ih * 0.25} x2={ix + iw * 0.85} y2={iy + ih * 0.25} stroke={S} strokeWidth={0.25} />
-      <line x1={ix + iw * 0.15} y1={iy + ih * 0.5}  x2={ix + iw * 0.85} y2={iy + ih * 0.5}  stroke={S} strokeWidth={0.25} />
-      <line x1={ix + iw * 0.15} y1={iy + ih * 0.75} x2={ix + iw * 0.6}  y2={iy + ih * 0.75} stroke={S} strokeWidth={0.25} />
-    </>
-  )
-}
-
-const TextSlicerIcon: VisualIcon = ({ x, y, w, h }) => {
-  const ix = x + w * 0.2; const iy = y + h * 0.15; const iw = w * 0.6; const ih = h * 0.12
-  return (
-    <>
-      <path d={`M${ix},${iy} L${ix + iw},${iy} L${ix + iw},${iy + ih} L${ix},${iy + ih} Z`} stroke={S} strokeWidth={sw} fill="none" />
-      <line x1={ix + iw * 0.08} y1={iy + ih * 0.2} x2={ix + iw * 0.08} y2={iy + ih * 0.8} stroke={S} strokeWidth={0.5} />
-    </>
-  )
-}
-
-const ShapeIcon: VisualIcon = ({ x, y, w, h }) => {
-  const ix = x + w * 0.28; const iy = y + h * 0.08; const iw = w * 0.44; const ih = h * 0.3
-  return (
-    <path d={`M${ix},${iy} L${ix + iw},${iy} L${ix + iw},${iy + ih} L${ix},${iy + ih} Z`} stroke={S} strokeWidth={sw} fill="none" />
-  )
-}
-
-const ImageIcon: VisualIcon = ({ x, y, w, h }) => {
-  const ix = x + w * 0.25; const iy = y + h * 0.06; const iw = w * 0.5; const ih = h * 0.32
-  const sunCx = ix + iw * 0.22; const sunCy = iy + ih * 0.28; const sunR = Math.min(w, h) * 0.035
-  return (
-    <>
-      <path d={`M${ix},${iy} L${ix + iw},${iy} L${ix + iw},${iy + ih} L${ix},${iy + ih} Z`} stroke={S} strokeWidth={sw} fill="none" />
-      <circle cx={sunCx} cy={sunCy} r={sunR} fill={S} />
-      <path
-        d={`M${ix},${iy + ih} L${ix + iw * 0.4},${iy + ih * 0.45} L${ix + iw * 0.65},${iy + ih * 0.7} L${ix + iw * 0.85},${iy + ih * 0.4} L${ix + iw},${iy + ih}`}
-        stroke={S} strokeWidth={sw} fill="none"
-      />
-    </>
-  )
-}
-
-const ActionButtonIcon: VisualIcon = ({ x, y, w, h }) => {
-  const ix = x + w * 0.3; const iy = y + h * 0.12; const iw = w * 0.4; const ih = h * 0.18
-  const cx = ix + iw / 2; const cy = iy + ih / 2
-  return (
-    <>
-      <path d={`M${ix},${iy} L${ix + iw},${iy} L${ix + iw},${iy + ih} L${ix},${iy + ih} Z`} stroke={S} strokeWidth={sw} fill="none" />
-      <path d={`M${cx - ih * 0.15},${cy - ih * 0.22} L${cx + ih * 0.25},${cy} L${cx - ih * 0.15},${cy + ih * 0.22} Z`} fill={S} />
-    </>
-  )
-}
-
-const BookmarkNavigatorIcon: VisualIcon = ({ x, y, w, h }) => {
-  const iy = y + h * 0.18; const ih = h * 0.12
-  return (
-    <>
-      {[0.22, 0.42, 0.62].map((f, i) => (
-        <path
-          key={f}
-          d={`M${x + w * f},${iy} L${x + w * (f + 0.14)},${iy} L${x + w * (f + 0.14)},${iy + ih} L${x + w * f},${iy + ih} Z`}
-          stroke={S} strokeWidth={sw} fill={i === 0 ? S : 'none'} fillOpacity={i === 0 ? 0.3 : 1}
-        />
-      ))}
-    </>
-  )
-}
-
-const PageNavigatorIcon: VisualIcon = ({ x, y, w, h }) => {
-  const iy = y + h * 0.1; const ih = h * 0.26; const iw = w * 0.16
-  return (
-    <>
-      {[0.22, 0.42, 0.62].map((f) => (
-        <path
-          key={f}
-          d={`M${x + w * f},${iy} L${x + w * f + iw},${iy} L${x + w * f + iw},${iy + ih} L${x + w * f},${iy + ih} Z`}
-          stroke={S} strokeWidth={sw} fill="none"
-        />
-      ))}
-    </>
-  )
-}
-
-export const PLACEHOLDER_ICON: VisualIcon = ({ x, y, w, h }) => {
-  const cx = x + w / 2; const cy = y + h * 0.22; const r = Math.min(w, h) * 0.1
+export const PLACEHOLDER_ICON: VisualIcon = ({ x, y, size }) => {
+  const cx = x + size / 2; const cy = y + size * 0.42; const r = size * 0.15
   return (
     <>
       <path
@@ -568,56 +248,18 @@ export const PLACEHOLDER_ICON: VisualIcon = ({ x, y, w, h }) => {
   )
 }
 
-export const VISUAL_ICON: Record<string, VisualIcon> = {
-  clusteredColumnChart:            ColIcon,
-  columnChart:                     ColIcon,
-  clusteredBarChart:               BarIcon,
-  barChart:                        BarIcon,
-  lineChart:                       LineIcon,
-  areaChart:                       AreaIcon,
-  waterfallChart:                  WaterfallIcon,
-  funnel:                          FunnelIcon,
-  scatterChart:                    ScatterIcon,
-  hundredPercentStackedBarChart:   BarIcon,
-  hundredPercentStackedColumnChart: ColIcon,
-  stackedAreaChart:                StackedAreaIcon,
-  ribbonChart:                     RibbonIcon,
-  pieChart:                        PieIcon,
-  donutChart:                      DonutIcon,
-  treemap:                         TreemapIcon,
-  cardVisual:                      CardIcon,
-  card:                            CardIcon,
-  kpi:                             KpiIcon,
-  gauge:                           GaugeIcon,
-  tableEx:                         TableIcon,
-  pivotTable:                      MatrixIcon,
-  slicer:                          SlicerIcon,
-  advancedSlicerVisual:            ButtonSlicerIcon,
-  map:                             MapIcon,
-  filledMap:                       MapIcon,
-  azureMap:                        MapIcon,
-  esriVisual:                      MapIcon,
-  decompositionTreeVisual:         DecompositionTreeIcon,
-  textbox:                         TextboxIcon,
-  keyDriversVisual:                KeyDriversIcon,
-  scorecard:                       GoalsIcon,
-  qnaVisual:                       QnAIcon,
-  aiNarratives:                    SmartNarrativeIcon,
-  lineStackedColumnComboChart:     ComboIcon,
-  lineClusteredColumnComboChart:   ComboIcon,
-  pythonVisual:                    ScriptIcon,
-  scriptVisual:                    ScriptIcon,
-  rdlVisual:                       PaginatedReportIcon,
-  textSlicer:                      TextSlicerIcon,
-  listSlicer:                      ButtonSlicerIcon,
-  shape:                           ShapeIcon,
-  image:                           ImageIcon,
-  actionButton:                    ActionButtonIcon,
-  bookmarkNavigator:               BookmarkNavigatorIcon,
-  pageNavigator:                   PageNavigatorIcon,
-  multiRowCard:                    CardIcon,
-}
+export const VISUAL_ICON: Record<string, VisualIcon> = Object.fromEntries(
+  Object.entries(POWER_BI_ICON_NAME).map(([visualType, iconName]) => [
+    visualType,
+    makePowerBiVisualIcon(iconName),
+  ])
+)
+
+const POWER_APPS_ICON = makePowerBiVisualIcon('powerApps')
+const POWER_AUTOMATE_ICON = makePowerBiVisualIcon('powerAutomate')
 
 export function getVisualIcon(visualType: string): VisualIcon {
+  if (/^PowerApps_PBI_CV_/.test(visualType)) return POWER_APPS_ICON
+  if (/^FlowVisual_/.test(visualType))        return POWER_AUTOMATE_ICON
   return VISUAL_ICON[visualType] ?? PLACEHOLDER_ICON
 }

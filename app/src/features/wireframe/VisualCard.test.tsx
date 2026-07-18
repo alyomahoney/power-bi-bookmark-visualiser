@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react'
 import { VisualCard } from './VisualCard'
 import { useReducedMotion } from 'motion/react'
+import { useUiStore } from '@/store/uiStore'
 import type { VisualElement } from '@/types/audit'
 
 function makeVisual(visualType: string, id = 'v1'): VisualElement {
@@ -62,7 +63,7 @@ describe('VisualCard', () => {
     expect(found).toBe(true)
   })
 
-  it('renders sub-label with raw visualType string', () => {
+  it('does not render a sub-label with the raw visualType string', () => {
     const { container } = render(
       <svg>
         <VisualCard visual={makeVisual('lineChart')} normPos={defaultNormPos} index={0} />
@@ -70,7 +71,8 @@ describe('VisualCard', () => {
     )
     const texts = container.querySelectorAll('text')
     const found = Array.from(texts).some(t => t.textContent === 'lineChart')
-    expect(found).toBe(true)
+    expect(found).toBe(false)
+    expect(texts).toHaveLength(1)
   })
 
   it('uses --color-text-primary for supported type label fill', () => {
@@ -189,5 +191,41 @@ describe('VisualCard', () => {
     expect(Number(rect.getAttribute('y'))).toBeCloseTo(10)
     expect(Number(rect.getAttribute('width'))).toBeCloseTo(30)
     expect(Number(rect.getAttribute('height'))).toBeCloseTo(25)
+  })
+
+  describe('showVisualLabels toggle', () => {
+    afterEach(() => {
+      useUiStore.setState({ showVisualLabels: true })
+    })
+
+    it('renders the label by default', () => {
+      const { container } = render(
+        <svg>
+          <VisualCard visual={makeVisual('clusteredColumnChart')} normPos={defaultNormPos} index={0} />
+        </svg>
+      )
+      const found = Array.from(container.querySelectorAll('text')).some(t => t.textContent === 'Col Chart')
+      expect(found).toBe(true)
+    })
+
+    it('hides the label when showVisualLabels is false', () => {
+      useUiStore.setState({ showVisualLabels: false })
+      const { container } = render(
+        <svg>
+          <VisualCard visual={makeVisual('clusteredColumnChart')} normPos={defaultNormPos} index={0} />
+        </svg>
+      )
+      expect(container.querySelector('text')).not.toBeInTheDocument()
+    })
+
+    it('still renders the icon when the label is hidden', () => {
+      useUiStore.setState({ showVisualLabels: false })
+      const { container } = render(
+        <svg>
+          <VisualCard visual={makeVisual('clusteredColumnChart')} normPos={defaultNormPos} index={0} />
+        </svg>
+      )
+      expect(container.querySelector('svg[data-icon-name]')).toBeInTheDocument()
+    })
   })
 })

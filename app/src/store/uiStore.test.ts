@@ -20,6 +20,24 @@ describe('uiStore — theme', () => {
   })
 })
 
+describe('uiStore — showVisualLabels', () => {
+  it('defaults to true (labels shown by default)', () => {
+    expect(useUiStore.getState().showVisualLabels).toBe(true)
+  })
+
+  it('toggleVisualLabels flips true to false', () => {
+    useUiStore.setState({ showVisualLabels: true })
+    useUiStore.getState().toggleVisualLabels()
+    expect(useUiStore.getState().showVisualLabels).toBe(false)
+  })
+
+  it('toggleVisualLabels flips false back to true', () => {
+    useUiStore.setState({ showVisualLabels: false })
+    useUiStore.getState().toggleVisualLabels()
+    expect(useUiStore.getState().showVisualLabels).toBe(true)
+  })
+})
+
 describe('uiStore — isParsing / parseProgressStep', () => {
   beforeEach(() => {
     useUiStore.setState({ isParsing: false, parseProgressStep: null })

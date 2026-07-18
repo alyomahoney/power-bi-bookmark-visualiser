@@ -5,6 +5,7 @@ import { useAuditReport, useSetAuditReport, useClearAudit, useSelectedBookmark, 
 import { sessionCache } from '@/shared/utils/sessionCache'
 import { typeHasAxis } from '@/shared/utils/bookmarkType'
 import { ThemeToggle } from '@/shared/components/ThemeToggle'
+import { VisualLabelsToggle } from '@/shared/components/VisualLabelsToggle'
 import { AppLogo } from '@/shared/components/AppLogo'
 import { BookmarkDetail } from './BookmarkDetail'
 import { BookmarkSearchInput } from './BookmarkSearchInput'
@@ -280,7 +281,8 @@ export default function AuditPage() {
           />
           {activePageLayout ? (
             <>
-              <div className="px-4 py-2 border-b border-border-subtle shrink-0 flex items-center justify-end">
+              <div className="px-4 py-2 border-b border-border-subtle shrink-0 flex items-center justify-end gap-2">
+                <VisualLabelsToggle />
                 <button
                   type="button"
                   onClick={() => {

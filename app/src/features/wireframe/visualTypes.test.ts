@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
+  computeIconLayout,
   getVisualCategory,
   getVisualDisplayName,
   getVisualIcon,
@@ -7,6 +8,14 @@ import {
   VISUAL_DISPLAY_NAME,
   PLACEHOLDER_ICON,
 } from './visualTypes'
+
+// Real card sizes (px) from a "Navigation & Utility" report page, converted to
+// viewBox units at canvasWidth=1280 (1 unit = 12.8px) — see wireframeLayout's
+// isotropic scaling. These pin down the icon-vs-no-icon boundary against
+// genuine small utility visuals (buttons, nav strips, shapes, slicers) so the
+// threshold can't silently regress back to hiding icons on real-world reports.
+const UNIT = 12.8
+const px = (n: number) => n / UNIT
 
 describe('getVisualCategory', () => {
   describe('charts', () => {
@@ -199,5 +208,51 @@ describe('getVisualDisplayName', () => {
     for (const type of mappedTypes) {
       expect(getVisualDisplayName(type)).toBe(VISUAL_DISPLAY_NAME[type])
     }
+  })
+})
+
+describe('getVisualIcon — PowerApps / Power Automate GUID-suffixed prefixes', () => {
+  it('returns a distinct, non-placeholder icon for a PowerApps_PBI_CV_ type', () => {
+    const icon = getVisualIcon('PowerApps_PBI_CV_abc123def456')
+    expect(icon).not.toBe(PLACEHOLDER_ICON)
+  })
+
+  it('returns a distinct, non-placeholder icon for a FlowVisual_ type', () => {
+    const icon = getVisualIcon('FlowVisual_xyz789')
+    expect(icon).not.toBe(PLACEHOLDER_ICON)
+  })
+})
+
+describe('computeIconLayout', () => {
+  it('drops the icon on very short utility elements (buttons, nav strips) — no room for icon + label', () => {
+    // actionButton, bookmarkNavigator, pageNavigator, textbox — all real
+    // Navigation & Utility page visuals, 39-52px tall on a 1280-wide canvas
+    expect(computeIconLayout(0, 0, px(100.3), px(39.8))).toBeNull()   // actionButton
+    expect(computeIconLayout(0, 0, px(439.7), px(51.4))).toBeNull()   // bookmarkNavigator
+    expect(computeIconLayout(0, 0, px(999.8), px(50.1))).toBeNull()   // pageNavigator
+    expect(computeIconLayout(0, 0, px(302.3), px(44.2))).toBeNull()   // textbox
+  })
+
+  it('shows a small icon on compact-but-not-tiny visuals (~90-100px tall)', () => {
+    expect(computeIconLayout(0, 0, px(182.2), px(99.8))).not.toBeNull()  // scriptVisual
+    expect(computeIconLayout(0, 0, px(130.1), px(93.3))).not.toBeNull()  // pythonVisual
+  })
+
+  it('shows a comfortably-sized icon on normal-sized visuals (~150px tall)', () => {
+    const layout = computeIconLayout(0, 0, px(346.5), px(150.4))  // advancedSlicerVisual
+    expect(layout).not.toBeNull()
+    expect(layout!.iconSize).toBeGreaterThan(3)
+  })
+
+  it('centres the icon+label block vertically as one unit — not pinned to the top', () => {
+    const y = 0, h = 40
+    const layout = computeIconLayout(0, y, 40, h)!
+    const gapAbove = layout.iconY - y
+    const gapBelow = (y + h) - layout.blockBottom
+    expect(gapAbove).toBeCloseTo(gapBelow, 5)
+  })
+
+  it('returns null once a card is too small in either dimension for a meaningful icon', () => {
+    expect(computeIconLayout(0, 0, 2, 2)).toBeNull()
   })
 })

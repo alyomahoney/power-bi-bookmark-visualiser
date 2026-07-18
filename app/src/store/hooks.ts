@@ -11,6 +11,12 @@ export function useTheme() {
   return { theme, toggleTheme }
 }
 
+export function useShowVisualLabels() {
+  const showVisualLabels = useUiStore((state) => state.showVisualLabels)
+  const toggleVisualLabels = useUiStore((state) => state.toggleVisualLabels)
+  return { showVisualLabels, toggleVisualLabels }
+}
+
 export function useAuditReport() {
   return useAuditStore((state) => state.auditReport)
 }

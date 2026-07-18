@@ -1,6 +1,7 @@
 import { motion, useReducedMotion } from 'motion/react'
 import type { VisualElement } from '@/types/audit'
-import { getVisualCategory, getVisualDisplayName, getVisualIcon } from './visualTypes'
+import { useShowVisualLabels } from '@/store/hooks'
+import { computeIconLayout, getVisualCategory, getVisualDisplayName, getVisualIcon } from './visualTypes'
 import type { VisualCategory } from './visualTypes'
 
 const CATEGORY_FILL: Record<VisualCategory, string> = {
@@ -34,6 +35,7 @@ export function VisualCard({
   onAnimationComplete,
 }: VisualCardProps) {
   const shouldReduceMotion = useReducedMotion()
+  const { showVisualLabels } = useShowVisualLabels()
   const { xPct, yPct, wPct, hPct } = normPos
   const category = getVisualCategory(visual.visualType)
   const fill = CATEGORY_FILL[category]
@@ -41,6 +43,8 @@ export function VisualCard({
   const labelFill = category === 'placeholder'
     ? 'var(--color-text-secondary)'
     : 'var(--color-text-primary)'
+  const iconLayout = computeIconLayout(xPct, yPct, wPct, hPct, showVisualLabels)
+  const labelCenterY = iconLayout ? iconLayout.labelCenterY : yPct + hPct / 2
 
   const transition = shouldReduceMotion
     ? { duration: 0 }
@@ -55,9 +59,11 @@ export function VisualCard({
       onAnimationComplete={onAnimationComplete}
     >
       <rect
+        data-card-bg="true"
         x={xPct} y={yPct} width={wPct} height={hPct}
-        fill={fill} rx={0.5}
-        {...(isAffected ? { stroke: 'var(--color-ring)', strokeWidth: 0.3 } : {})}
+        fill={fill} rx={1.2}
+        stroke={isAffected ? 'var(--color-ring)' : 'var(--color-visual-card-border)'}
+        strokeWidth={isAffected ? 0.3 : 0.1}
       />
       {isDataAffected && (
         shouldReduceMotion ? (
@@ -80,29 +86,22 @@ export function VisualCard({
           />
         )
       )}
-      <IconComponent x={xPct} y={yPct} w={wPct} h={hPct} />
-      <text
-        x={xPct + wPct / 2}
-        y={yPct + hPct / 2 - 0.8}
-        textAnchor="middle"
-        dominantBaseline="auto"
-        fontSize={1.2}
-        fontWeight="bold"
-        fill={labelFill}
-        style={{ textTransform: 'uppercase' }}
-      >
-        {getVisualDisplayName(visual.visualType)}
-      </text>
-      <text
-        x={xPct + wPct / 2}
-        y={yPct + hPct / 2 + 0.8}
-        textAnchor="middle"
-        dominantBaseline="auto"
-        fontSize={0.9}
-        fill="var(--color-text-muted)"
-      >
-        {visual.visualType}
-      </text>
+      {iconLayout && (
+        <IconComponent x={iconLayout.iconX} y={iconLayout.iconY} size={iconLayout.iconSize} />
+      )}
+      {showVisualLabels && (
+        <text
+          x={xPct + wPct / 2}
+          y={labelCenterY}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize={1.15}
+          fontWeight={600}
+          fill={labelFill}
+        >
+          {getVisualDisplayName(visual.visualType)}
+        </text>
+      )}
     </motion.g>
   )
 }

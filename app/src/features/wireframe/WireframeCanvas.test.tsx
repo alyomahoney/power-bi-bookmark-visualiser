@@ -40,7 +40,7 @@ describe('WireframeCanvas', () => {
   it('renders the correct number of visual cards', () => {
     const [pages, selectedPageId] = makePages(4)
     const { container } = render(<WireframeCanvas pages={pages} selectedPageId={selectedPageId} />)
-    expect(container.querySelectorAll('rect')).toHaveLength(4)
+    expect(container.querySelectorAll('rect[data-card-bg]')).toHaveLength(4)
   })
 
   it('renders zero visuals when pageLayout has no visuals', () => {
@@ -64,7 +64,7 @@ describe('WireframeCanvas', () => {
       const [pages, selectedPageId] = makePages(3)
       const { container } = render(<WireframeCanvas pages={pages} selectedPageId={selectedPageId} />)
       expect(container.querySelector('svg')).toBeInTheDocument()
-      expect(container.querySelectorAll('rect')).toHaveLength(3)
+      expect(container.querySelectorAll('rect[data-card-bg]')).toHaveLength(3)
     })
 
     it('canvas state is still driven by store when reduced motion is enabled — empty with no selection', () => {
@@ -144,8 +144,8 @@ describe('WireframeCanvas', () => {
         ],
       }
       const { container } = render(<WireframeCanvas pages={[pageLayout]} selectedPageId={pageLayout.pageId} />)
-      // All 3 visuals must produce a rect — none silently omitted
-      expect(container.querySelectorAll('rect')).toHaveLength(3)
+      // All 3 visuals must produce a card rect — none silently omitted
+      expect(container.querySelectorAll('rect[data-card-bg]')).toHaveLength(3)
     })
   })
 
@@ -207,7 +207,7 @@ describe('WireframeCanvas', () => {
       useAuditStore.setState({ auditReport: makeAuditReport([bk]) })
       useUiStore.setState({ selectedBookmarkId: 'bk-1' })
       const { container } = render(<WireframeCanvas pages={[pageLayout]} selectedPageId={pageLayout.pageId} />)
-      const rects = container.querySelectorAll('rect')
+      const rects = container.querySelectorAll('rect[data-card-bg]')
       expect(rects[0].getAttribute('stroke')).toBe('var(--color-ring)')
       expect(rects[1]).not.toHaveAttribute('stroke', 'var(--color-ring)')
     })
@@ -265,7 +265,7 @@ describe('WireframeCanvas', () => {
       useUiStore.setState({ selectedBookmarkId: 'bk-a' })
       const { container } = render(<WireframeCanvas pages={[pageLayout]} selectedPageId={pageLayout.pageId} />)
       act(() => { useUiStore.setState({ selectedBookmarkId: 'bk-b' }) })
-      const rects = container.querySelectorAll('rect')
+      const rects = container.querySelectorAll('rect[data-card-bg]')
       expect(rects[0]).not.toHaveAttribute('stroke', 'var(--color-ring)')
       expect(rects[1].getAttribute('stroke')).toBe('var(--color-ring)')
     })
@@ -408,17 +408,45 @@ describe('WireframeCanvas', () => {
   })
 
   describe('visual type icons', () => {
-    it('renders icon SVG elements (line/path/circle) inside each known-type visual card', () => {
-      const [pages, selectedPageId] = makePages(2)
-      const { container } = render(<WireframeCanvas pages={pages} selectedPageId={selectedPageId} />)
-      // clusteredColumnChart → ColIcon which renders <line> elements
-      const lines = container.querySelectorAll('line')
-      expect(lines.length).toBeGreaterThan(0)
-      // Background card rects are unchanged — icons use line/path/circle only
-      expect(container.querySelectorAll('rect')).toHaveLength(2)
+    it('renders a PowerBiIcon glyph (nested svg) inside each known-type visual card with room for one', () => {
+      // Tall enough (well above the label-safe-zone threshold) that the icon actually renders —
+      // see makePowerBiVisualIcon's label-collision guard in visualTypes.tsx.
+      const pageLayout: PageLayout = {
+        pageId: 'pg-test',
+        pageDisplayName: 'Test Page',
+        canvasWidth: 1280,
+        canvasHeight: 720,
+        visuals: Array.from({ length: 2 }, (_, i) => ({
+          id: `visual-${i}`,
+          visualType: 'clusteredColumnChart',
+          position: { x: i * 300, y: 0, width: 280, height: 280 },
+        })),
+      }
+      const { container } = render(<WireframeCanvas pages={[pageLayout]} selectedPageId={pageLayout.pageId} />)
+      // clusteredColumnChart → PowerBiIcon's "clusteredColumn" glyph, a nested <svg data-icon-name="...">
+      const icons = container.querySelectorAll('svg[data-icon-name="clusteredColumn"]')
+      expect(icons).toHaveLength(2)
+      // Background card rects are unaffected by the icon's own internal rects
+      expect(container.querySelectorAll('rect[data-card-bg]')).toHaveLength(2)
     })
 
-    it('renders placeholder icon (path/circle) for an unknown visual type, rect count stays at 1', () => {
+    it('suppresses the icon (but keeps the label) on a card too short to fit both', () => {
+      const pageLayout: PageLayout = {
+        pageId: 'pg-test',
+        pageDisplayName: 'Test Page',
+        canvasWidth: 1280,
+        canvasHeight: 720,
+        visuals: [
+          { id: 'v-short', visualType: 'clusteredColumnChart', position: { x: 0, y: 0, width: 200, height: 60 } },
+        ],
+      }
+      const { container } = render(<WireframeCanvas pages={[pageLayout]} selectedPageId={pageLayout.pageId} />)
+      expect(container.querySelector('svg[data-icon-name]')).not.toBeInTheDocument()
+      const texts = container.querySelectorAll('text')
+      expect(Array.from(texts).some(t => t.textContent === 'Col Chart')).toBe(true)
+    })
+
+    it('renders placeholder icon (path/circle) for an unknown visual type, card rect count stays at 1', () => {
       const pageLayout: PageLayout = {
         pageId: 'pg-test',
         pageDisplayName: 'Test Page',
@@ -429,9 +457,10 @@ describe('WireframeCanvas', () => {
         ],
       }
       const { container } = render(<WireframeCanvas pages={[pageLayout]} selectedPageId={pageLayout.pageId} />)
-      // PLACEHOLDER_ICON uses path + circle, not rect
+      // PLACEHOLDER_ICON uses path + circle, not rect, and no PowerBiIcon glyph
       expect(container.querySelector('path')).toBeInTheDocument()
-      expect(container.querySelectorAll('rect')).toHaveLength(1)
+      expect(container.querySelector('svg[data-icon-name]')).not.toBeInTheDocument()
+      expect(container.querySelectorAll('rect[data-card-bg]')).toHaveLength(1)
     })
   })
 })
