@@ -1,6 +1,6 @@
 import { motion, useReducedMotion } from 'motion/react'
 import type { VisualElement } from '@/types/audit'
-import { useShowVisualLabels } from '@/store/hooks'
+import { useShowVisualLabels, useTheme } from '@/store/hooks'
 import { computeIconLayout, getVisualCategory, getVisualDisplayName, getVisualIcon } from './visualTypes'
 import type { VisualCategory } from './visualTypes'
 
@@ -11,6 +11,16 @@ const CATEGORY_FILL: Record<VisualCategory, string> = {
   tables:      'var(--color-visual-table)',
   slicers:     'var(--color-visual-slicer)',
   placeholder: 'var(--color-visual-placeholder)',
+}
+
+// A category's own fill colour, pushed toward its own hue's extreme to read as a
+// glow. Dark-theme fills are near-black, so brightening toward white gives the
+// most headroom; light-theme fills are already near-white pastels, so deepening
+// toward black instead is what stays visible.
+function categoryGlowFill(fill: string, isDark: boolean): string {
+  return isDark
+    ? `color-mix(in oklch, ${fill}, white 35%)`
+    : `color-mix(in oklch, ${fill}, black 20%)`
 }
 
 interface VisualCardProps {
@@ -36,9 +46,11 @@ export function VisualCard({
 }: VisualCardProps) {
   const shouldReduceMotion = useReducedMotion()
   const { showVisualLabels } = useShowVisualLabels()
+  const { theme } = useTheme()
   const { xPct, yPct, wPct, hPct } = normPos
   const category = getVisualCategory(visual.visualType)
   const fill = CATEGORY_FILL[category]
+  const glowFill = categoryGlowFill(fill, theme === 'dark')
   const IconComponent = getVisualIcon(visual.visualType)
   const labelFill = category === 'placeholder'
     ? 'var(--color-text-secondary)'
@@ -68,20 +80,20 @@ export function VisualCard({
       {isDataAffected && (
         shouldReduceMotion ? (
           <rect
+            data-glow="true"
             x={xPct} y={yPct} width={wPct} height={hPct}
-            fill="none"
-            stroke="var(--color-data-glow)"
-            strokeWidth={0.3}
-            rx={0.5}
+            fill={glowFill}
+            fillOpacity={0.5}
+            rx={1.2}
           />
         ) : (
           <motion.rect
+            data-glow="true"
             x={xPct} y={yPct} width={wPct} height={hPct}
-            fill="none"
-            stroke="var(--color-data-glow)"
-            rx={0.5}
-            initial={{ strokeWidth: 0.3, strokeOpacity: 0.6 }}
-            animate={{ strokeWidth: [0.3, 0.8, 0.3], strokeOpacity: [0.6, 1, 0.6] }}
+            fill={glowFill}
+            rx={1.2}
+            initial={{ fillOpacity: 0.18 }}
+            animate={{ fillOpacity: [0.18, 0.6, 0.18] }}
             transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
           />
         )

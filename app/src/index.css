@@ -25,7 +25,6 @@
   --color-visual-slicer: #2A3A1C;
   --color-visual-placeholder: #252525;
   --color-visual-card-border: #383838;
-  --color-data-glow: #F59E0B;
   /* Typography */
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: ui-monospace, 'SF Mono', 'Fira Code', monospace;
@@ -56,7 +55,6 @@
   /* Darker than --color-border-subtle so card edges stay visible against the
      light pastel visual-type fills above (subtle would nearly disappear). */
   --color-visual-card-border: #C0C0C0;
-  --color-data-glow: #D97706;
 
   /* Shadcn semantic tokens mapped to project palette */
   --background: #FAFAFA;
@@ -117,7 +115,6 @@
   --color-visual-slicer: #2A3A1C;
   --color-visual-placeholder: #252525;
   --color-visual-card-border: #383838;
-  --color-data-glow: #F59E0B;
 
   /* Shadcn semantic tokens mapped to project palette */
   --background: #191919;

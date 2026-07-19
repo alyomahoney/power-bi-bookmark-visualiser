@@ -318,14 +318,14 @@ describe('WireframeCanvas', () => {
       vi.restoreAllMocks()
     })
 
-    it("Test A: 'data' type bookmark — amber glow stroke appears on affected visual rect", () => {
+    it("Test A: 'data' type bookmark — amber glow background appears on affected visual rect", () => {
       const bk = makeBookmark({ type: 'data', suppressDisplay: true, affectedVisualIds: ['v-affected'] })
       useAuditStore.setState({ auditReport: { bookmarks: [bk], pages: [], activePageId: '' } })
       useUiStore.setState({ selectedBookmarkId: 'bk-glow' })
       const { container } = render(<WireframeCanvas pages={[glowPageLayout]} selectedPageId={glowPageLayout.pageId} />)
-      const rects = container.querySelectorAll('rect')
-      const glowRect = Array.from(rects).find(r => r.getAttribute('stroke') === 'var(--color-data-glow)')
+      const glowRect = container.querySelector('rect[data-glow="true"]')
       expect(glowRect).toBeInTheDocument()
+      expect(glowRect?.getAttribute('fill')).toMatch(/^color-mix\(in oklch, var\(--color-visual-chart\), white/)
     })
 
     it("Test B: 'data' type bookmark — no indigo ring on affected visual", () => {
@@ -343,9 +343,8 @@ describe('WireframeCanvas', () => {
       useAuditStore.setState({ auditReport: { bookmarks: [bk], pages: [], activePageId: '' } })
       useUiStore.setState({ selectedBookmarkId: 'bk-glow' })
       const { container } = render(<WireframeCanvas pages={[glowPageLayout]} selectedPageId={glowPageLayout.pageId} />)
-      const rects = Array.from(container.querySelectorAll('rect'))
-      const glowRect = rects.find(r => r.getAttribute('stroke') === 'var(--color-data-glow)')
-      expect(glowRect).toBeUndefined()
+      const glowRect = container.querySelector('rect[data-glow="true"]')
+      expect(glowRect).not.toBeInTheDocument()
     })
 
     it("Test D: 'data-display' type bookmark — both amber glow AND indigo ring present on affected visual", () => {
@@ -353,9 +352,8 @@ describe('WireframeCanvas', () => {
       useAuditStore.setState({ auditReport: { bookmarks: [bk], pages: [], activePageId: '' } })
       useUiStore.setState({ selectedBookmarkId: 'bk-glow' })
       const { container } = render(<WireframeCanvas pages={[glowPageLayout]} selectedPageId={glowPageLayout.pageId} />)
-      const rects = Array.from(container.querySelectorAll('rect'))
-      const glowRect = rects.find(r => r.getAttribute('stroke') === 'var(--color-data-glow)')
-      const ringRect = rects.find(r => r.getAttribute('stroke') === 'var(--color-ring)')
+      const glowRect = container.querySelector('rect[data-glow="true"]')
+      const ringRect = Array.from(container.querySelectorAll('rect')).find(r => r.getAttribute('stroke') === 'var(--color-ring)')
       expect(glowRect).toBeInTheDocument()
       expect(ringRect).toBeInTheDocument()
     })
@@ -366,8 +364,7 @@ describe('WireframeCanvas', () => {
       useAuditStore.setState({ auditReport: { bookmarks: [bk], pages: [], activePageId: '' } })
       useUiStore.setState({ selectedBookmarkId: 'bk-glow' })
       const { container } = render(<WireframeCanvas pages={[glowPageLayout]} selectedPageId={glowPageLayout.pageId} />)
-      const rects = Array.from(container.querySelectorAll('rect'))
-      const glowRect = rects.find(r => r.getAttribute('stroke') === 'var(--color-data-glow)')
+      const glowRect = container.querySelector('rect[data-glow="true"]')
       expect(glowRect).toBeInTheDocument()
     })
 
@@ -376,9 +373,8 @@ describe('WireframeCanvas', () => {
       useAuditStore.setState({ auditReport: { bookmarks: [bk], pages: [], activePageId: '' } })
       useUiStore.setState({ selectedBookmarkId: 'bk-glow' })
       const { container } = render(<WireframeCanvas pages={[glowPageLayout]} selectedPageId={glowPageLayout.pageId} />)
-      const rects = Array.from(container.querySelectorAll('rect'))
-      const glowRect = rects.find(r => r.getAttribute('stroke') === 'var(--color-data-glow)')
-      expect(glowRect).toBeUndefined()
+      const glowRect = container.querySelector('rect[data-glow="true"]')
+      expect(glowRect).not.toBeInTheDocument()
     })
   })
 
